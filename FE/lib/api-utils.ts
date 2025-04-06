@@ -2,12 +2,19 @@
  * API utilities for making requests to the backend
  */
 
-// Define API base URL with environment variable and hard fallback
-// The fallback URL is used if the environment variable is not available
+// Get the current environment
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Define API base URL with multiple fallbacks
+// 1. Window ENV_API_URL (set at runtime by api-config.js)
+// 2. NEXT_PUBLIC_API_URL environment variable
+// 3. In development mode, use local API routes
+// 4. Production fallback URL
 export const API_BASE_URL = 
   typeof window !== 'undefined' && window.ENV_API_URL 
     ? window.ENV_API_URL 
-    : (process.env.NEXT_PUBLIC_API_URL || 'https://octopus-app-ct5vs.ondigitalocean.app/api');
+    : (process.env.NEXT_PUBLIC_API_URL || 
+      (isDevelopment ? '/api' : 'https://octopus-app-ct5vs.ondigitalocean.app/api'));
 
 // Log the API URL during initialization
 if (typeof window !== 'undefined') {
@@ -47,7 +54,13 @@ export async function fetchFromApi<T>(
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`API error (${response.status}) from ${url}: ${errorText}`);
       throw new Error(`API error (${response.status}): ${errorText}`);
+    }
+
+    // Log successful API requests in development
+    if (isDevelopment) {
+      console.log(`API Success: ${url}`);
     }
 
     return await response.json();

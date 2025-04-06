@@ -53,6 +53,20 @@ export function TaskBoard({ initialTasks = [], onTaskCreated }: TaskBoardProps) 
   const handleTaskCreated = (taskData: any) => {
     console.log('TaskBoard: Creating new task:', taskData);
     
+    // Process tags based on their type
+    let processedTags;
+    if (taskData.tags) {
+      if (typeof taskData.tags === 'string') {
+        processedTags = taskData.tags.split(",").map((tag: string) => tag.trim());
+      } else if (Array.isArray(taskData.tags)) {
+        processedTags = taskData.tags;
+      } else {
+        processedTags = [];
+      }
+    } else {
+      processedTags = [];
+    }
+
     const newTask: Task = {
       id: taskData.id || `task-${tasks.length + 1}`,
       title: taskData.title,
@@ -68,7 +82,7 @@ export function TaskBoard({ initialTasks = [], onTaskCreated }: TaskBoardProps) 
           })
         : undefined,
       project: taskData.project,
-      tags: taskData.tags ? taskData.tags.split(",").map((tag: string) => tag.trim()) : [],
+      tags: processedTags,
     }
 
     setTasks([...tasks, newTask])
@@ -191,7 +205,7 @@ function TaskCard({ task, onDragComplete }: TaskCardProps) {
     }
   };
 
-  // Parse tags - handle both string and array formats
+  // Parse tags - handle all possible formats
   const renderTags = () => {
     if (!task.tags) return [];
     
@@ -205,7 +219,7 @@ function TaskCard({ task, onDragComplete }: TaskCardProps) {
       return task.tags;
     }
     
-    // Fallback
+    // If it's another type, return empty array
     return [];
   };
 
