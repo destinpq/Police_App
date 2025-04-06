@@ -1,0 +1,14 @@
+[build]
+builder = "heroku/buildpacks:20"
+buildCommand = "npm install --legacy-peer-deps && npm run build"
+packageManager = "npm"
+
+[deploy]
+startCommand = "npm start"
+httpPort = 8080
+
+[build.env]
+NPM_CONFIG_PRODUCTION = "false"
+USE_NPM = "true"
+USE_PNPM = "false"
+USE_YARN = "false" 

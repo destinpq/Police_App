@@ -1,0 +1,5 @@
+nodejs:
+  # Specify npm as the package manager
+  packageManager: npm
+  buildCommand: npm install --legacy-peer-deps && npm run build
+  startCommand: npm start 

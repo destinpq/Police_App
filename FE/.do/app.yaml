@@ -3,4 +3,17 @@ env:
   - key: NEXT_PUBLIC_API_URL
     value: "https://octopus-app-ct5vs.ondigitalocean.app/api"
   - key: NODE_ENV
-    value: "production" 
+    value: "production"
+  - key: PORT
+    value: "8080"
+  - key: NPM_CONFIG_PRODUCTION
+    value: "false"
+  - key: USE_NPM
+    value: "true"
+  - key: USE_PNPM
+    value: "false"
+  - key: USE_YARN
+    value: "false"
+build_command: npm install --legacy-peer-deps && npm run build
+run_command: npm start
+http_port: 8080 
