@@ -88,7 +88,7 @@ export function CreateProjectDialog({
     console.log(values)
 
     // Try to connect to the API endpoint with better error handling
-    fetch('http://localhost:3001/api/projects', {
+    fetch('http://localhost:8888/api/projects', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

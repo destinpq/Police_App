@@ -86,7 +86,7 @@ export function CreateTaskDialog({
     console.log(values)
 
     // Try to connect to the API endpoint with better error handling
-    fetch('http://localhost:3001/api/tasks', {
+    fetch('http://localhost:8888/api/tasks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

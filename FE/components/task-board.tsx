@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 
@@ -13,99 +13,13 @@ interface Task {
   assignee?: string
   dueDate?: string
   project?: string
-  tags?: string[]
+  tags?: string[] | string
 }
 
-const initialTasks: Task[] = [
-  {
-    id: "task-1",
-    title: "Research competitors",
-    description: "Analyze top 5 competitors in the market",
-    status: "todo",
-    priority: "medium",
-    assignee: "Alice Johnson",
-    dueDate: "May 20, 2023",
-    project: "Marketing Campaign",
-    tags: ["research", "marketing"],
-  },
-  {
-    id: "task-2",
-    title: "Design new landing page",
-    description: "Create wireframes for the new landing page",
-    status: "todo",
-    priority: "high",
-    assignee: "Bob Smith",
-    dueDate: "May 15, 2023",
-    project: "Website Redesign",
-    tags: ["design", "frontend"],
-  },
-  {
-    id: "task-3",
-    title: "Update documentation",
-    description: "Update API documentation with new endpoints",
-    status: "in-progress",
-    priority: "medium",
-    assignee: "Charlie Davis",
-    dueDate: "May 18, 2023",
-    project: "Mobile App",
-    tags: ["documentation", "api"],
-  },
-  {
-    id: "task-4",
-    title: "Fix navigation bug",
-    description: "Fix the navigation bug on mobile devices",
-    status: "in-progress",
-    priority: "high",
-    assignee: "Diana Miller",
-    dueDate: "May 12, 2023",
-    project: "Website Redesign",
-    tags: ["bug", "frontend"],
-  },
-  {
-    id: "task-5",
-    title: "Write blog post",
-    description: "Write a blog post about our new features",
-    status: "in-progress",
-    priority: "low",
-    assignee: "Alice Johnson",
-    dueDate: "May 25, 2023",
-    project: "Marketing Campaign",
-    tags: ["content", "marketing"],
-  },
-  {
-    id: "task-6",
-    title: "Implement authentication",
-    description: "Implement OAuth authentication",
-    status: "done",
-    priority: "high",
-    assignee: "Bob Smith",
-    dueDate: "May 5, 2023",
-    project: "Mobile App",
-    tags: ["security", "backend"],
-  },
-  {
-    id: "task-7",
-    title: "Create email templates",
-    description: "Design and code email templates for marketing",
-    status: "done",
-    priority: "medium",
-    assignee: "Charlie Davis",
-    dueDate: "May 8, 2023",
-    project: "Marketing Campaign",
-    tags: ["email", "design"],
-  },
-  {
-    id: "task-8",
-    title: "Optimize database queries",
-    description: "Improve performance of slow database queries",
-    status: "done",
-    priority: "high",
-    assignee: "Diana Miller",
-    dueDate: "May 10, 2023",
-    project: "Mobile App",
-    tags: ["performance", "database"],
-  },
-]
+interface TaskBoardProps {
+  initialTasks?: Task[]
+  onTaskCreated?: (task: Task) => void
+}
 
 const getPriorityColor = (priority: Task["priority"]) => {
   switch (priority) {
@@ -120,16 +34,26 @@ const getPriorityColor = (priority: Task["priority"]) => {
   }
 }
 
-export function TaskBoard() {
+export function TaskBoard({ initialTasks = [], onTaskCreated }: TaskBoardProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
+
+  // Update local state when initialTasks prop changes
+  useEffect(() => {
+    if (initialTasks && initialTasks.length > 0) {
+      console.log('TaskBoard: Updating tasks from props:', initialTasks);
+      setTasks(initialTasks);
+    }
+  }, [initialTasks])
 
   const todoTasks = tasks.filter((task) => task.status === "todo")
   const inProgressTasks = tasks.filter((task) => task.status === "in-progress")
   const doneTasks = tasks.filter((task) => task.status === "done")
 
   const handleTaskCreated = (taskData: any) => {
+    console.log('TaskBoard: Creating new task:', taskData);
+    
     const newTask: Task = {
-      id: `task-${tasks.length + 1}`,
+      id: taskData.id || `task-${tasks.length + 1}`,
       title: taskData.title,
       description: taskData.description,
       status: taskData.status,
@@ -147,6 +71,34 @@ export function TaskBoard() {
     }
 
     setTasks([...tasks, newTask])
+    
+    // Notify parent component
+    if (onTaskCreated) {
+      onTaskCreated(newTask);
+    }
+  }
+
+  // Handle drag and drop
+  const moveTask = (taskId: string, newStatus: Task["status"]) => {
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId) {
+        // Update in backend
+        fetch(`http://localhost:8888/api/tasks/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: newStatus }),
+        })
+        .catch(err => console.error('Error updating task status:', err));
+        
+        // Return updated task for local state
+        return { ...task, status: newStatus };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
   }
 
   return (
@@ -160,12 +112,18 @@ export function TaskBoard() {
             onTaskCreated={(data) => handleTaskCreated({ ...data, status: "todo" })}
           />
         </div>
-        {todoTasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
-        {todoTasks.length === 0 && (
-          <div className="p-4 text-center text-muted-foreground border border-dashed rounded-md">No tasks to do</div>
-        )}
+        <div className="space-y-3 min-h-[200px]">
+          {todoTasks.map((task) => (
+            <TaskCard 
+              key={task.id} 
+              task={task} 
+              onDragComplete={(taskId) => moveTask(taskId, "in-progress")}
+            />
+          ))}
+          {todoTasks.length === 0 && (
+            <div className="p-4 text-center text-muted-foreground border border-dashed rounded-md">No tasks to do</div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-4 min-w-[280px]">
@@ -177,14 +135,20 @@ export function TaskBoard() {
             onTaskCreated={(data) => handleTaskCreated({ ...data, status: "in-progress" })}
           />
         </div>
-        {inProgressTasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
-        {inProgressTasks.length === 0 && (
-          <div className="p-4 text-center text-muted-foreground border border-dashed rounded-md">
-            No tasks in progress
-          </div>
-        )}
+        <div className="space-y-3 min-h-[200px]">
+          {inProgressTasks.map((task) => (
+            <TaskCard 
+              key={task.id} 
+              task={task} 
+              onDragComplete={(taskId) => moveTask(taskId, "done")}
+            />
+          ))}
+          {inProgressTasks.length === 0 && (
+            <div className="p-4 text-center text-muted-foreground border border-dashed rounded-md">
+              No tasks in progress
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-4 min-w-[280px]">
@@ -196,22 +160,65 @@ export function TaskBoard() {
             onTaskCreated={(data) => handleTaskCreated({ ...data, status: "done" })}
           />
         </div>
-        {doneTasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
-        {doneTasks.length === 0 && (
-          <div className="p-4 text-center text-muted-foreground border border-dashed rounded-md">
-            No completed tasks
-          </div>
-        )}
+        <div className="space-y-3 min-h-[200px]">
+          {doneTasks.map((task) => (
+            <TaskCard 
+              key={task.id} 
+              task={task} 
+            />
+          ))}
+          {doneTasks.length === 0 && (
+            <div className="p-4 text-center text-muted-foreground border border-dashed rounded-md">
+              No completed tasks
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-function TaskCard({ task }: { task: Task }) {
+interface TaskCardProps {
+  task: Task
+  onDragComplete?: (taskId: string) => void
+}
+
+function TaskCard({ task, onDragComplete }: TaskCardProps) {
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('taskId', task.id);
+  };
+  
+  const handleDragEnd = (e: React.DragEvent) => {
+    if (onDragComplete) {
+      onDragComplete(task.id);
+    }
+  };
+
+  // Parse tags - handle both string and array formats
+  const renderTags = () => {
+    if (!task.tags) return [];
+    
+    // If tags is a string, split it
+    if (typeof task.tags === 'string') {
+      return task.tags.split(',').map((tag: string) => tag.trim());
+    }
+    
+    // If already an array, use it
+    if (Array.isArray(task.tags)) {
+      return task.tags;
+    }
+    
+    // Fallback
+    return [];
+  };
+
   return (
-    <Card className="shadow-sm hover:shadow transition-shadow">
+    <Card 
+      className="shadow-sm hover:shadow transition-shadow cursor-pointer"
+      draggable={!!onDragComplete}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <CardHeader className="p-4 pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base line-clamp-1">{task.title}</CardTitle>
@@ -230,9 +237,9 @@ function TaskCard({ task }: { task: Task }) {
       <CardContent className="p-4 pt-0">
         <p className="text-sm line-clamp-2">{task.description}</p>
 
-        {task.tags && task.tags.length > 0 && (
+        {task.tags && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {task.tags.map((tag, index) => (
+            {renderTags().map((tag: string, index: number) => (
               <span
                 key={index}
                 className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-muted"

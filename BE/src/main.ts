@@ -30,7 +30,8 @@ async function bootstrap() {
   );
 
   // Start the server
-  const port = configService.get<number>('PORT', 3001);
+  const port = configService.get<number>('PORT', 8888);
+  console.log(`Trying to start server on port ${port}...`);
   
   try {
     await app.listen(port);

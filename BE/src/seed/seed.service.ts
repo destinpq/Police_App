@@ -111,8 +111,8 @@ export class SeedService {
           description: 'Complete overhaul of the company website with modern design and improved user experience',
           startDate: new Date(),
           endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
-          status: 'active',
-          priority: 'high',
+          status: 'active' as 'planning' | 'active' | 'on-hold' | 'completed',
+          priority: 'high' as 'low' | 'medium' | 'high',
           manager: 'manager1',
           department: 'design',
           budget: '50000',
@@ -123,8 +123,8 @@ export class SeedService {
           description: 'Develop a native mobile application for iOS and Android platforms',
           startDate: new Date(),
           endDate: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000), // 120 days from now
-          status: 'planning',
-          priority: 'high',
+          status: 'planning' as 'planning' | 'active' | 'on-hold' | 'completed',
+          priority: 'high' as 'low' | 'medium' | 'high',
           manager: 'manager2',
           department: 'engineering',
           budget: '75000',
@@ -135,8 +135,8 @@ export class SeedService {
           description: 'Launch a comprehensive marketing campaign for the new product line',
           startDate: new Date(),
           endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), // 45 days from now
-          status: 'active',
-          priority: 'medium',
+          status: 'active' as 'planning' | 'active' | 'on-hold' | 'completed',
+          priority: 'medium' as 'low' | 'medium' | 'high',
           manager: 'manager3',
           department: 'marketing',
           budget: '25000',
@@ -147,8 +147,8 @@ export class SeedService {
           description: 'Coordinate the launch of our new flagship product',
           startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
           endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
-          status: 'planning',
-          priority: 'high',
+          status: 'planning' as 'planning' | 'active' | 'on-hold' | 'completed',
+          priority: 'high' as 'low' | 'medium' | 'high',
           manager: 'manager4',
           department: 'product',
           budget: '100000',
@@ -174,8 +174,8 @@ export class SeedService {
         {
           title: 'Research competitors',
           description: 'Analyze top 5 competitors in the market',
-          status: 'todo',
-          priority: 'medium',
+          status: 'todo' as 'todo' | 'in-progress' | 'done',
+          priority: 'medium' as 'low' | 'medium' | 'high',
           assignee: 'user1',
           project: 'project3', // Marketing Campaign
           tags: 'research,marketing',
@@ -184,8 +184,8 @@ export class SeedService {
         {
           title: 'Design new landing page',
           description: 'Create wireframes for the new landing page',
-          status: 'todo',
-          priority: 'high',
+          status: 'todo' as 'todo' | 'in-progress' | 'done',
+          priority: 'high' as 'low' | 'medium' | 'high',
           assignee: 'user2',
           project: 'project1', // Website Redesign
           tags: 'design,frontend',
@@ -194,8 +194,8 @@ export class SeedService {
         {
           title: 'Update documentation',
           description: 'Update API documentation with new endpoints',
-          status: 'in-progress',
-          priority: 'medium',
+          status: 'in-progress' as 'todo' | 'in-progress' | 'done',
+          priority: 'medium' as 'low' | 'medium' | 'high',
           assignee: 'user3',
           project: 'project2', // Mobile App
           tags: 'documentation,api',
@@ -204,8 +204,8 @@ export class SeedService {
         {
           title: 'Fix navigation bug',
           description: 'Fix the navigation bug on mobile devices',
-          status: 'in-progress',
-          priority: 'high',
+          status: 'in-progress' as 'todo' | 'in-progress' | 'done',
+          priority: 'high' as 'low' | 'medium' | 'high',
           assignee: 'user4',
           project: 'project1', // Website Redesign
           tags: 'bug,frontend',
@@ -214,8 +214,8 @@ export class SeedService {
         {
           title: 'Write blog post',
           description: 'Write a blog post about our new features',
-          status: 'in-progress',
-          priority: 'low',
+          status: 'in-progress' as 'todo' | 'in-progress' | 'done',
+          priority: 'low' as 'low' | 'medium' | 'high',
           assignee: 'user1',
           project: 'project3', // Marketing Campaign
           tags: 'content,marketing',
@@ -224,8 +224,8 @@ export class SeedService {
         {
           title: 'Implement authentication',
           description: 'Implement OAuth authentication',
-          status: 'done',
-          priority: 'high',
+          status: 'done' as 'todo' | 'in-progress' | 'done',
+          priority: 'high' as 'low' | 'medium' | 'high',
           assignee: 'user2',
           project: 'project2', // Mobile App
           tags: 'security,backend',
@@ -234,8 +234,8 @@ export class SeedService {
         {
           title: 'Create email templates',
           description: 'Design and code email templates for marketing',
-          status: 'done',
-          priority: 'medium',
+          status: 'done' as 'todo' | 'in-progress' | 'done',
+          priority: 'medium' as 'low' | 'medium' | 'high',
           assignee: 'user3',
           project: 'project3', // Marketing Campaign
           tags: 'email,design',
@@ -244,8 +244,8 @@ export class SeedService {
         {
           title: 'Optimize database queries',
           description: 'Improve performance of slow database queries',
-          status: 'done',
-          priority: 'high',
+          status: 'done' as 'todo' | 'in-progress' | 'done',
+          priority: 'high' as 'low' | 'medium' | 'high',
           assignee: 'user4',
           project: 'project2', // Mobile App
           tags: 'performance,database',
