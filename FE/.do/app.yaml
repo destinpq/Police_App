@@ -14,6 +14,6 @@ env:
     value: "false"
   - key: USE_YARN
     value: "false"
-build_command: npm install --legacy-peer-deps && npm run build
+build_command: chmod +x scripts/set-env.sh && scripts/set-env.sh npm install --legacy-peer-deps && scripts/set-env.sh npm run build
 run_command: npm start
 http_port: 8080 

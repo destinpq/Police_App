@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TaskFilter } from "@/components/task-filter"
 import { EditTaskDialog } from "@/components/edit-task-dialog"
 import { Button } from "@/components/ui/button"
-import { API_BASE_URL } from "@/lib/constants"
+import { fetchFromApi } from "@/lib/api-utils"
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
@@ -20,19 +20,13 @@ export default function TasksPage() {
     const fetchTasks = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/tasks`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch tasks');
-        }
-        
-        const data = await response.json();
+        const data = await fetchFromApi('tasks');
         console.log('Fetched tasks:', data);
         setTasks(data);
         setError(null);
       } catch (err) {
         console.error('Error fetching tasks:', err);
-        setError(err.message);
+        setError(err?.message || 'Failed to fetch tasks');
       } finally {
         setLoading(false);
       }
@@ -44,6 +38,16 @@ export default function TasksPage() {
   // Handle task creation
   const handleTaskCreated = (newTask) => {
     setTasks(prevTasks => [...prevTasks, newTask]);
+  };
+
+  // Update the delete task handler
+  const handleDeleteTask = (taskId) => {
+    fetchFromApi(`tasks/${taskId}`, { method: 'DELETE' })
+      .then(() => {
+        // Remove from state
+        setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+      })
+      .catch(err => console.error('Error deleting task:', err));
   };
 
   return (
@@ -158,17 +162,7 @@ export default function TasksPage() {
                             variant="ghost" 
                             size="icon" 
                             className="text-destructive h-8 w-8"
-                            onClick={() => {
-                              // Delete task
-                              fetch(`${API_BASE_URL}/tasks/${task.id}`, {
-                                method: 'DELETE',
-                              })
-                              .then(() => {
-                                // Remove from state
-                                setTasks(prevTasks => prevTasks.filter(t => t.id !== task.id));
-                              })
-                              .catch(err => console.error('Error deleting task:', err));
-                            }}
+                            onClick={() => handleDeleteTask(task.id)}
                           >
                             <svg
                               width="15"

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Script to set environment variables for the build process
+
+# Set the API URL environment variable
+export NEXT_PUBLIC_API_URL="https://octopus-app-ct5vs.ondigitalocean.app/api"
+
+echo "Environment set: NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
+
+# Execute the command passed as arguments
+exec "$@" 

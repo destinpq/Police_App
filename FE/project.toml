@@ -1,6 +1,6 @@
 [build]
 builder = "heroku/buildpacks:20"
-buildCommand = "npm install --legacy-peer-deps && npm run build"
+buildCommand = "chmod +x scripts/set-env.sh && scripts/set-env.sh npm install --legacy-peer-deps && scripts/set-env.sh npm run build"
 packageManager = "npm"
 
 [deploy]
@@ -8,6 +8,7 @@ startCommand = "npm start"
 httpPort = 8080
 
 [build.env]
+NEXT_PUBLIC_API_URL = "https://octopus-app-ct5vs.ondigitalocean.app/api"
 NPM_CONFIG_PRODUCTION = "false"
 USE_NPM = "true"
 USE_PNPM = "false"

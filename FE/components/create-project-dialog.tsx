@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarIcon, Plus } from "lucide-react"
 import { format } from "date-fns"
-import { API_BASE_URL } from "@/lib/constants"
+import { fetchFromApi } from "@/lib/api-utils"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -89,20 +89,9 @@ export function CreateProjectDialog({
     console.log(values)
 
     // Try to connect to the API endpoint with better error handling
-    fetch(`${API_BASE_URL}/projects`, {
+    fetchFromApi('projects', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(values),
-    })
-    .then(response => {
-      if (!response.ok) {
-        return response.text().then(text => {
-          throw new Error(`API error: ${text}`);
-        });
-      }
-      return response.json();
     })
     .then(data => {
       console.log('Success:', data);

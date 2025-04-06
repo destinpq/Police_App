@@ -7,7 +7,7 @@ import { TaskSummary } from "@/components/task-summary"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { API_BASE_URL } from "@/lib/constants"
+import { fetchFromApi, apiUrl } from "@/lib/api-utils"
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -21,22 +21,13 @@ export default function Dashboard() {
       try {
         setLoading(true);
         
+        console.log('Fetching data from:', apiUrl('tasks'));
+        
         // Fetch tasks and projects in parallel
-        const [tasksResponse, projectsResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/tasks`),
-          fetch(`${API_BASE_URL}/projects`)
+        const [tasksData, projectsData] = await Promise.all([
+          fetchFromApi('tasks'),
+          fetchFromApi('projects')
         ]);
-        
-        if (!tasksResponse.ok) {
-          throw new Error('Failed to fetch tasks');
-        }
-        
-        if (!projectsResponse.ok) {
-          throw new Error('Failed to fetch projects');
-        }
-        
-        const tasksData = await tasksResponse.json();
-        const projectsData = await projectsResponse.json();
         
         console.log('Fetched tasks:', tasksData);
         console.log('Fetched projects:', projectsData);
@@ -46,7 +37,7 @@ export default function Dashboard() {
         setError(null);
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError(err.message);
+        setError(err?.message || 'Failed to fetch data');
       } finally {
         setLoading(false);
       }
