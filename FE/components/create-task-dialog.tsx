@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarIcon, Plus } from "lucide-react"
 import { format } from "date-fns"
+import { API_BASE_URL } from "@/lib/constants"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -86,7 +87,7 @@ export function CreateTaskDialog({
     console.log(values)
 
     // Try to connect to the API endpoint with better error handling
-    fetch('http://localhost:8888/api/tasks', {
+    fetch(`${API_BASE_URL}/tasks`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

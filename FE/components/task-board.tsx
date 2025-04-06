@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
+import { API_BASE_URL } from "@/lib/constants"
 
 interface Task {
   id: string
@@ -83,7 +84,7 @@ export function TaskBoard({ initialTasks = [], onTaskCreated }: TaskBoardProps) 
     const updatedTasks = tasks.map(task => {
       if (task.id === taskId) {
         // Update in backend
-        fetch(`http://localhost:8888/api/tasks/${taskId}`, {
+        fetch(`${API_BASE_URL}/tasks/${taskId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',

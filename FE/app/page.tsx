@@ -7,6 +7,7 @@ import { TaskSummary } from "@/components/task-summary"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { API_BASE_URL } from "@/lib/constants"
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -22,8 +23,8 @@ export default function Dashboard() {
         
         // Fetch tasks and projects in parallel
         const [tasksResponse, projectsResponse] = await Promise.all([
-          fetch('http://localhost:8888/api/tasks'),
-          fetch('http://localhost:8888/api/projects')
+          fetch(`${API_BASE_URL}/tasks`),
+          fetch(`${API_BASE_URL}/projects`)
         ]);
         
         if (!tasksResponse.ok) {

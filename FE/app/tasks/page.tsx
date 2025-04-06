@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TaskFilter } from "@/components/task-filter"
 import { EditTaskDialog } from "@/components/edit-task-dialog"
 import { Button } from "@/components/ui/button"
+import { API_BASE_URL } from "@/lib/constants"
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
@@ -19,7 +20,7 @@ export default function TasksPage() {
     const fetchTasks = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8888/api/tasks');
+        const response = await fetch(`${API_BASE_URL}/tasks`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch tasks');
@@ -159,7 +160,7 @@ export default function TasksPage() {
                             className="text-destructive h-8 w-8"
                             onClick={() => {
                               // Delete task
-                              fetch(`http://localhost:8888/api/tasks/${task.id}`, {
+                              fetch(`${API_BASE_URL}/tasks/${task.id}`, {
                                 method: 'DELETE',
                               })
                               .then(() => {
