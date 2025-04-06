@@ -1,0 +1,6 @@
+name: frontend
+env:
+  - key: NEXT_PUBLIC_API_URL
+    value: "https://octopus-app-ct5vs.ondigitalocean.app/api"
+  - key: NODE_ENV
+    value: "production" 

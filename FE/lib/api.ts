@@ -2,9 +2,8 @@
  * API service for connecting to the backend
  */
 
-// For simplicity, use a constant API URL
-// In a production app, this would come from environment variables
-const API_BASE_URL = 'http://localhost:3001/api';
+// Use environment variable for API URL with fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /**
  * Generic fetch function with error handling
