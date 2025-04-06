@@ -30,13 +30,14 @@ async function bootstrap() {
   );
 
   // Start the server
-  const port = configService.get<number>('PORT', 8888);
-  console.log(`Trying to start server on port ${port}...`);
+  const port = configService.get<number>('PORT', 8080);
+  const host = '0.0.0.0'; // Listen on all network interfaces
+  console.log(`Starting server on ${host}:${port}...`);
   
   try {
-    await app.listen(port);
+    await app.listen(port, host);
     console.log(`Application running on port ${port}`);
-    console.log(`API is available at http://localhost:${port}/api`);
+    console.log(`API is available at https://octopus-app-ct5vs.ondigitalocean.app/api`);
   } catch (error) {
     console.error('Failed to start the server:', error);
   }

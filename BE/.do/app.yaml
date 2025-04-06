@@ -1,0 +1,9 @@
+name: backend
+env:
+  - key: NODE_ENV
+    value: "production"
+  - key: PORT
+    value: "8080"
+build_command: npm install && npm run build
+run_command: npm run start:prod
+http_port: 8080 
