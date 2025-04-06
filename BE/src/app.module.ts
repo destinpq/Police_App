@@ -32,10 +32,9 @@ import { Project } from './projects/entities/project.entity';
         entities: [User, Task, Project], // Explicit entity list
         synchronize: true, // Always true for now during development
         logging: true,     // Always log SQL queries
-        extra: {
-          trustServerCertificate: true,
+        ssl: {
+          rejectUnauthorized: false, // Required for DigitalOcean managed databases
         },
-        ssl: false,        // Disable SSL for local development
         autoLoadEntities: true,
       }),
     }),
