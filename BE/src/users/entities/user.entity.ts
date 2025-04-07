@@ -20,6 +20,24 @@ export class User {
   @Column({ name: 'password_hash' }) // Use snake_case for column name
   passwordHash: string;
 
+  @Column({ length: 100, nullable: true })
+  role: string;
+
+  @Column({ length: 100, nullable: true })
+  department: string;
+
+  @Column({ type: 'text', nullable: true })
+  bio: string;
+
+  @Column({ length: 30, nullable: true })
+  phone: string;
+
+  @Column({ type: 'text', nullable: true })
+  skills: string;
+
+  @Column({ type: 'text', nullable: true })
+  avatar: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp with time zone' })
   createdAt: Date;
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -23,6 +23,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
+import { useTeam } from "@/contexts/team-context"
+import api from "@/lib/api"
+import { toast } from "sonner"
 
 const formSchema = z.object({
   id: z.string(),
@@ -62,8 +66,13 @@ interface Task {
   assignee?: string
   dueDate?: string
   project?: string
-  tags?: string[]
+  tags?: string[] | string
   estimatedHours?: string
+}
+
+interface Project {
+  id: string;
+  name: string;
 }
 
 interface EditTaskDialogProps {
@@ -82,6 +91,10 @@ export function EditTaskDialog({
   buttonIcon = true,
 }: EditTaskDialogProps) {
   const [open, setOpen] = useState(false)
+  const { teamMembers } = useTeam()
+  
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loadingProjects, setLoadingProjects] = useState(false)
 
   // Parse the dueDate string to a Date object if it exists
   const parseDueDate = () => {
@@ -105,10 +118,36 @@ export function EditTaskDialog({
       dueDate: parseDueDate(),
       assignee: task.assignee,
       project: task.project,
-      tags: task.tags ? task.tags.join(", ") : "",
+      tags: task.tags 
+        ? Array.isArray(task.tags) 
+          ? task.tags.join(", ") 
+          : typeof task.tags === 'string' 
+            ? task.tags 
+            : ""
+        : "",
       estimatedHours: task.estimatedHours,
     },
   })
+
+  // Fetch projects when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchProjects();
+    }
+  }, [open]);
+
+  const fetchProjects = async () => {
+    setLoadingProjects(true);
+    try {
+      const projectsData = await api.projects.getAll();
+      setProjects(projectsData);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      toast.error("Failed to load projects");
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
 
   function onSubmit(values: FormValues) {
     // In a real app, you would send this to your API
@@ -259,10 +298,15 @@ export function EditTaskDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Alice Johnson">Alice Johnson</SelectItem>
-                        <SelectItem value="Bob Smith">Bob Smith</SelectItem>
-                        <SelectItem value="Charlie Davis">Charlie Davis</SelectItem>
-                        <SelectItem value="Diana Miller">Diana Miller</SelectItem>
+                        {teamMembers.length > 0 ? (
+                          teamMembers.map((member) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-members" disabled>No team members found</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -281,14 +325,19 @@ export function EditTaskDialog({
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select project" />
+                          <SelectValue placeholder={loadingProjects ? "Loading projects..." : "Select project"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Website Redesign">Website Redesign</SelectItem>
-                        <SelectItem value="Mobile App">Mobile App</SelectItem>
-                        <SelectItem value="Marketing Campaign">Marketing Campaign</SelectItem>
-                        <SelectItem value="Product Launch">Product Launch</SelectItem>
+                        {projects.length > 0 ? (
+                          projects.map((project) => (
+                            <SelectItem key={project.id} value={project.id || "undefined-project"}>
+                              {project.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-projects" disabled>No projects found</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

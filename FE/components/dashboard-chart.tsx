@@ -1,17 +1,50 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "@/components/ui/chart"
-
-const data = [
-  { name: "Jan", tasks: 12 },
-  { name: "Feb", tasks: 19 },
-  { name: "Mar", tasks: 15 },
-  { name: "Apr", tasks: 24 },
-  { name: "May", tasks: 18 },
-  { name: "Jun", tasks: 27 },
-]
+import api from "@/lib/api"
 
 export function DashboardChart() {
+  const [data, setData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const monthlyTrends = await api.analytics.getMonthlyTrends()
+        setData(monthlyTrends || [])
+      } catch (err: any) {
+        console.error("Error fetching dashboard chart data:", err)
+        setError(err?.message || "Failed to load chart data")
+        setData([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="h-[300px] w-full flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    )
+  }
+
+  if (error || data.length === 0) {
+    return (
+      <div className="h-[300px] w-full flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <p>{error || "No data available"}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -25,7 +58,7 @@ export function DashboardChart() {
           }}
         >
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis dataKey="name" className="text-xs" />
+          <XAxis dataKey="month" className="text-xs" />
           <YAxis className="text-xs" />
           <Tooltip
             content={({ active, payload }) => {
@@ -35,7 +68,7 @@ export function DashboardChart() {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="flex flex-col">
                         <span className="text-[0.70rem] uppercase text-muted-foreground">Month</span>
-                        <span className="font-bold text-muted-foreground">{payload[0].payload.name}</span>
+                        <span className="font-bold text-muted-foreground">{payload[0].payload.month}</span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-[0.70rem] uppercase text-muted-foreground">Tasks</span>

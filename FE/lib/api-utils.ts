@@ -5,16 +5,24 @@
 // Get the current environment
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Define API base URL with multiple fallbacks
-// 1. Window ENV_API_URL (set at runtime by api-config.js)
-// 2. NEXT_PUBLIC_API_URL environment variable
-// 3. In development mode, use local API routes
-// 4. Production fallback URL
-export const API_BASE_URL = 
-  typeof window !== 'undefined' && window.ENV_API_URL 
-    ? window.ENV_API_URL 
-    : (process.env.NEXT_PUBLIC_API_URL || 
-      (isDevelopment ? '/api' : 'https://octopus-app-ct5vs.ondigitalocean.app/api'));
+// Define API base URL with environment variable fallbacks
+export const getApiBaseUrl = (): string => {
+  // Browser-side: Use window.ENV_API_URL if available (set by api-config.js)
+  if (typeof window !== 'undefined' && window.ENV_API_URL) {
+    return window.ENV_API_URL;
+  }
+  
+  // Use environment variable if available
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // Default to localhost for development
+  return 'http://localhost:8888/api';
+};
+
+// Create and export the API base URL
+export const API_BASE_URL = getApiBaseUrl();
 
 // Log the API URL during initialization
 if (typeof window !== 'undefined') {
@@ -63,7 +71,18 @@ export async function fetchFromApi<T>(
       console.log(`API Success: ${url}`);
     }
 
-    return await response.json();
+    // Handle no-content responses (204) properly
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return { success: true } as unknown as T;
+    }
+
+    // For other responses, try to parse as JSON
+    try {
+      return await response.json();
+    } catch (e) {
+      console.warn(`Response from ${url} is not valid JSON, returning empty object`, e);
+      return {} as T;
+    }
   } catch (error) {
     console.error(`Error fetching from ${url}:`, error);
     throw error;

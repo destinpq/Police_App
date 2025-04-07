@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CalendarIcon, Filter, X } from "lucide-react"
 import { format, subDays } from "date-fns"
 
@@ -10,6 +10,9 @@ import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import api from "@/lib/api"
+import { toast } from "sonner"
+import { useTeam } from "@/contexts/team-context"
 
 interface TaskFilterProps {
   onFilterChange: (filters: {
@@ -20,6 +23,11 @@ interface TaskFilterProps {
     priority?: string
     assignee?: string
   }) => void
+}
+
+interface Project {
+  id: string;
+  name: string;
 }
 
 export function TaskFilter({ onFilterChange }: TaskFilterProps) {
@@ -36,6 +44,27 @@ export function TaskFilter({ onFilterChange }: TaskFilterProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const [activeFilters, setActiveFilters] = useState<string[]>([])
+
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loadingProjects, setLoadingProjects] = useState(false)
+  const { teamMembers } = useTeam()
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    setLoadingProjects(true);
+    try {
+      const projectsData = await api.projects.getAll();
+      setProjects(projectsData);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      toast.error("Failed to load projects");
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
 
   const handleFilterApply = () => {
     const newFilters = []
@@ -202,13 +231,18 @@ export function TaskFilter({ onFilterChange }: TaskFilterProps) {
                   <h4 className="font-medium leading-none">Project</h4>
                   <Select value={project} onValueChange={setProject}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All Projects" />
+                      <SelectValue placeholder={loadingProjects ? "Loading projects..." : "All Projects"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Website Redesign">Website Redesign</SelectItem>
-                      <SelectItem value="Mobile App">Mobile App</SelectItem>
-                      <SelectItem value="Marketing Campaign">Marketing Campaign</SelectItem>
-                      <SelectItem value="Product Launch">Product Launch</SelectItem>
+                      {projects.length > 0 ? (
+                        projects.map((proj) => (
+                          <SelectItem key={proj.id} value={proj.id || "undefined-project"}>
+                            {proj.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-projects" disabled>No projects found</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -248,10 +282,15 @@ export function TaskFilter({ onFilterChange }: TaskFilterProps) {
                       <SelectValue placeholder="All Assignees" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Alice Johnson">Alice Johnson</SelectItem>
-                      <SelectItem value="Bob Smith">Bob Smith</SelectItem>
-                      <SelectItem value="Charlie Davis">Charlie Davis</SelectItem>
-                      <SelectItem value="Diana Miller">Diana Miller</SelectItem>
+                      {teamMembers.length > 0 ? (
+                        teamMembers.map((member) => (
+                          <SelectItem key={member.id} value={member.id || "undefined-member"}>
+                            {member.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-members" disabled>No team members found</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

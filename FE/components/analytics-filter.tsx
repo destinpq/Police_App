@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CalendarIcon, Filter, Users } from "lucide-react"
 import { format, subDays } from "date-fns"
 
@@ -10,6 +10,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import api from "@/lib/api"
+import { toast } from "sonner"
 
 interface AnalyticsFilterProps {
   onFilterChange: (filters: {
@@ -20,6 +22,12 @@ interface AnalyticsFilterProps {
     member?: string
   }) => void
   onViewChange: (view: "personal" | "team" | "organization") => void
+}
+
+interface Department {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 export function AnalyticsFilter({ onFilterChange, onViewChange }: AnalyticsFilterProps) {
@@ -35,6 +43,26 @@ export function AnalyticsFilter({ onFilterChange, onViewChange }: AnalyticsFilte
   const [isOpen, setIsOpen] = useState(false)
 
   const [activeFilters, setActiveFilters] = useState<string[]>([])
+
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [loadingDepartments, setLoadingDepartments] = useState(false)
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  const fetchDepartments = async () => {
+    setLoadingDepartments(true);
+    try {
+      const departmentsData = await api.departments.getAll();
+      setDepartments(departmentsData);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      toast.error("Failed to load departments");
+    } finally {
+      setLoadingDepartments(false);
+    }
+  };
 
   const handleFilterApply = () => {
     const newFilters = []
@@ -77,14 +105,8 @@ export function AnalyticsFilter({ onFilterChange, onViewChange }: AnalyticsFilte
   }
 
   const getDepartmentName = (id: string) => {
-    const departments: Record<string, string> = {
-      engineering: "Engineering",
-      design: "Design",
-      product: "Product",
-      marketing: "Marketing",
-      sales: "Sales",
-    }
-    return departments[id] || id
+    const found = departments.find(d => d.id === id);
+    return found ? found.name : id;
   }
 
   const getMemberName = (id: string) => {
@@ -235,14 +257,18 @@ export function AnalyticsFilter({ onFilterChange, onViewChange }: AnalyticsFilte
                   <h4 className="font-medium leading-none">Department</h4>
                   <Select value={department} onValueChange={setDepartment}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All Departments" />
+                      <SelectValue placeholder={loadingDepartments ? "Loading departments..." : "All Departments"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="engineering">Engineering</SelectItem>
-                      <SelectItem value="design">Design</SelectItem>
-                      <SelectItem value="product">Product</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="sales">Sales</SelectItem>
+                      {departments.length > 0 ? (
+                        departments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id || "undefined-dept"}>
+                            {dept.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-departments" disabled>No departments found</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

@@ -1,84 +1,105 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// Sample task data for testing
-const tasks = [
-  {
-    id: "task1",
-    title: "Landing Page Design",
-    description: "Design a modern landing page for the new product",
-    status: "In Progress",
-    priority: "High",
-    assignee: "Diana Miller",
-    dueDate: "2023-09-15",
-    tags: ["design", "frontend"],
-    projectId: "project1"
-  },
-  {
-    id: "task2",
-    title: "API Integration",
-    description: "Integrate payment gateway API",
-    status: "To Do",
-    priority: "Medium",
-    assignee: "Charlie Davis",
-    dueDate: "2023-09-20",
-    tags: "backend,api",
-    projectId: "project1"
-  },
-  {
-    id: "task3",
-    title: "User Authentication",
-    description: "Implement OAuth for user authentication",
-    status: "To Do",
-    priority: "High",
-    assignee: "Bob Smith",
-    dueDate: "2023-09-18",
-    tags: ["security", "backend"],
-    projectId: "project2"
-  },
-  {
-    id: "task4",
-    title: "Bug Fixes",
-    description: "Fix reported bugs in the checkout process",
-    status: "In Progress",
-    priority: "High",
-    assignee: "Bob Smith",
-    dueDate: "2023-09-12",
-    tags: "bugfix,frontend",
-    projectId: "project2"
-  },
-  {
-    id: "task5",
-    title: "Performance Optimization",
-    description: "Optimize database queries for better performance",
-    status: "Done",
-    priority: "Medium",
-    assignee: "Charlie Davis",
-    dueDate: "2023-09-10",
-    tags: ["optimization", "backend"],
-    projectId: "project1"
-  }
-];
-
-export async function GET() {
-  return NextResponse.json(tasks);
+// Forwarding API route to backend
+export async function GET(request: NextRequest) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api';
+  const res = await fetch(`${apiUrl}/tasks`, {
+    headers: {
+      'Content-Type': 'application/json',
+      // Forward auth headers if present
+      ...request.headers
+    },
+  });
+  
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
 
-export async function POST(request: Request) {
-  try {
-    const newTask = await request.json();
-    // In a real app, you would validate and save to a database
-    const task = {
-      id: `task${tasks.length + 1}`,
-      ...newTask,
-      createdAt: new Date().toISOString()
-    };
-    
-    // For testing, we'll just return the task as if it was added
-    return NextResponse.json(task, { status: 201 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to create task" },
-      { status: 400 }
-    );
+export async function POST(request: NextRequest) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api';
+  const body = await request.json();
+  
+  const res = await fetch(`${apiUrl}/tasks`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // Forward auth headers if present
+      ...request.headers
+    },
+    body: JSON.stringify(body),
+  });
+  
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
+}
+
+export async function PATCH(request: NextRequest) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api';
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  
+  if (!id) {
+    return NextResponse.json({ error: 'Missing task ID' }, { status: 400 });
   }
+  
+  const body = await request.json();
+  
+  const res = await fetch(`${apiUrl}/tasks/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      // Forward auth headers if present
+      ...request.headers
+    },
+    body: JSON.stringify(body),
+  });
+  
+  // Handle both empty and JSON responses
+  let responseData = {};
+  if (res.status !== 204) { // No content
+    try {
+      responseData = await res.json();
+    } catch (e) {
+      // If no JSON is returned, just use an empty object
+      responseData = { success: true };
+    }
+  } else {
+    responseData = { success: true };
+  }
+  
+  return NextResponse.json(responseData, { status: res.status });
+}
+
+export async function DELETE(request: NextRequest) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api';
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  
+  if (!id) {
+    return NextResponse.json({ error: 'Missing task ID' }, { status: 400 });
+  }
+  
+  const res = await fetch(`${apiUrl}/tasks/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      // Forward auth headers if present
+      ...request.headers
+    },
+  });
+  
+  // Handle both empty and JSON responses
+  let responseData = {};
+  if (res.status !== 204) { // No content
+    try {
+      responseData = await res.json();
+    } catch (e) {
+      // If no JSON is returned, just use an empty object
+      responseData = { success: true };
+    }
+  } else {
+    responseData = { success: true };
+  }
+  
+  return NextResponse.json(responseData, { status: res.status });
 } 

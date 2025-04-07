@@ -2,11 +2,14 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, Upload } from "lucide-react"
+import { toast } from "sonner"
+import { useTeam } from "@/contexts/team-context"
+import api from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -51,10 +54,23 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 interface CreateTeamMemberDialogProps {
-  onMemberCreated?: (member: FormValues) => void
+  onMemberCreated?: (member: any) => void
   buttonVariant?: "default" | "outline" | "secondary" | "ghost" | "link"
   buttonSize?: "default" | "sm" | "lg" | "icon"
   fullWidth?: boolean
+}
+
+// Add interfaces for departments and roles
+interface Department {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface Role {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 export function CreateTeamMemberDialog({
@@ -65,6 +81,11 @@ export function CreateTeamMemberDialog({
 }: CreateTeamMemberDialogProps) {
   const [open, setOpen] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const { addTeamMember } = useTeam()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -80,17 +101,64 @@ export function CreateTeamMemberDialog({
     },
   })
 
-  function onSubmit(values: FormValues) {
-    // In a real app, you would send this to your API
-    console.log(values)
-
-    if (onMemberCreated) {
-      onMemberCreated(values)
+  // Fetch departments and roles when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchDepartmentsAndRoles();
     }
+  }, [open]);
 
-    setOpen(false)
-    form.reset()
-    setAvatarPreview(null)
+  const fetchDepartmentsAndRoles = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch departments
+      const departmentsData = await api.departments.getAll();
+      setDepartments(departmentsData);
+
+      // Fetch roles
+      const rolesData = await api.roles.getAll();
+      setRoles(rolesData);
+    } catch (error) {
+      console.error("Error fetching departments or roles:", error);
+      toast.error("Failed to load departments or roles");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  async function onSubmit(values: FormValues) {
+    setIsSubmitting(true)
+    
+    try {
+      // Use the context function to add the team member
+      const memberData = {
+        name: values.name,
+        email: values.email,
+        role: values.role || "",
+        department: values.department || "",
+        bio: values.bio,
+        phone: values.phone,
+        skills: values.skills,
+        avatar: values.avatar
+      };
+      
+      const newMember = await addTeamMember(memberData)
+      
+      // Call the onMemberCreated callback if provided and if member was created successfully
+      if (newMember && onMemberCreated) {
+        onMemberCreated(newMember)
+      }
+
+      // Close the dialog and reset form
+      setOpen(false)
+      form.reset()
+      setAvatarPreview(null)
+    } catch (error) {
+      // Error handling is done in the context
+      console.error('Error in form submission:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,18 +264,19 @@ export function CreateTeamMemberDialog({
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select role" />
+                          <SelectValue placeholder={isLoading ? "Loading roles..." : "Select role"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="developer">Developer</SelectItem>
-                        <SelectItem value="designer">Designer</SelectItem>
-                        <SelectItem value="product-manager">Product Manager</SelectItem>
-                        <SelectItem value="project-manager">Project Manager</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="sales">Sales</SelectItem>
-                        <SelectItem value="hr">HR</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        {roles.length > 0 ? (
+                          roles.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              {role.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-roles" disabled>No roles found</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -224,18 +293,19 @@ export function CreateTeamMemberDialog({
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select department" />
+                          <SelectValue placeholder={isLoading ? "Loading departments..." : "Select department"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="engineering">Engineering</SelectItem>
-                        <SelectItem value="design">Design</SelectItem>
-                        <SelectItem value="product">Product</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="sales">Sales</SelectItem>
-                        <SelectItem value="operations">Operations</SelectItem>
-                        <SelectItem value="hr">HR</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
+                        {departments.length > 0 ? (
+                          departments.map((department) => (
+                            <SelectItem key={department.id} value={department.id}>
+                              {department.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-departments" disabled>No departments found</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -288,7 +358,9 @@ export function CreateTeamMemberDialog({
             />
 
             <DialogFooter>
-              <Button type="submit">Add Team Member</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Adding...' : 'Add Team Member'}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

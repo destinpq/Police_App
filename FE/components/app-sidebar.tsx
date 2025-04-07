@@ -1,8 +1,9 @@
 "use client"
 
-import { BarChart3, CheckSquare, Home, MessageSquare, Users, ExternalLink } from "lucide-react"
+import { BarChart3, CheckSquare, Home, MessageSquare, Users, ExternalLink, Building2, ShieldCheck } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import { LucideIcon } from "lucide-react"
 
 import {
   Sidebar,
@@ -19,10 +20,34 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 
+// Define types for navigation items
+type NavigationItemBase = {
+  title: string;
+  icon: LucideIcon;
+  href: string;
+};
+
+type InternalNavigationItem = NavigationItemBase & {
+  isActive: boolean;
+  external?: never;
+};
+
+type ExternalNavigationItem = NavigationItemBase & {
+  external: boolean;
+  isActive?: never;
+};
+
+type NavigationItem = InternalNavigationItem | ExternalNavigationItem;
+
+type NavigationGroup = {
+  title: string;
+  items: NavigationItem[];
+};
+
 export function AppSidebar() {
   const pathname = usePathname()
 
-  const navigation = [
+  const navigation: NavigationGroup[] = [
     {
       title: "Main",
       items: [
@@ -49,6 +74,29 @@ export function AppSidebar() {
           icon: MessageSquare,
           href: "/chat",
           isActive: pathname === "/chat",
+        },
+      ],
+    },
+    {
+      title: "Admin",
+      items: [
+        {
+          title: "Team Members",
+          icon: Users,
+          href: "/team",
+          isActive: pathname === "/team",
+        },
+        {
+          title: "Departments",
+          icon: Building2,
+          href: "/admin/departments",
+          isActive: pathname.includes('/admin/departments'),
+        },
+        {
+          title: "Roles",
+          icon: ShieldCheck,
+          href: "/admin/roles",
+          isActive: pathname.includes('/admin/roles'),
         },
       ],
     },
@@ -84,7 +132,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {group.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={item.isActive} tooltip={item.title}>
+                    <SidebarMenuButton asChild isActive={!!item.isActive} tooltip={item.title}>
                       {item.external ? (
                         <a href={item.href} target="_blank" rel="noopener noreferrer">
                           <item.icon className="h-4 w-4" />
@@ -104,22 +152,6 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/team">
-                    <Users className="h-4 w-4" />
-                    <span>Team Members</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

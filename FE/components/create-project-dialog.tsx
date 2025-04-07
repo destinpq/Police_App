@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarIcon, Plus } from "lucide-react"
 import { format } from "date-fns"
-import { fetchFromApi } from "@/lib/api-utils"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -24,6 +23,17 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
+import api from "@/lib/api"
+import { toast } from "sonner"
+import { useTeam } from "@/contexts/team-context"
+
+// Add interface for Department
+interface Department {
+  id: string;
+  name: string;
+  description?: string;
+}
 
 const formSchema = z.object({
   name: z
@@ -68,6 +78,10 @@ export function CreateProjectDialog({
   fullWidth = false,
 }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [fetchingDepartments, setFetchingDepartments] = useState(false)
+  const { teamMembers } = useTeam()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -84,38 +98,49 @@ export function CreateProjectDialog({
     },
   })
 
-  function onSubmit(values: FormValues) {
-    // In a real app, you would send this to your API
-    console.log(values)
+  // Fetch departments when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchDepartments();
+    }
+  }, [open]);
 
-    // Try to connect to the API endpoint with better error handling
-    fetchFromApi('projects', {
-      method: 'POST',
-      body: JSON.stringify(values),
-    })
-    .then(data => {
-      console.log('Success:', data);
+  const fetchDepartments = async () => {
+    setFetchingDepartments(true);
+    try {
+      const departmentsData = await api.departments.getAll();
+      setDepartments(departmentsData);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      toast.error("Failed to load departments");
+    } finally {
+      setFetchingDepartments(false);
+    }
+  };
+
+  async function onSubmit(values: FormValues) {
+    try {
+      setIsLoading(true)
+      
+      // Send the data to the API
+      const newProject = await api.projects.create(values)
+      console.log("Created project:", newProject)
+
+      // Call the onProjectCreated callback if provided
       if (onProjectCreated) {
-        onProjectCreated(values);
+        onProjectCreated(values)
       }
-      setOpen(false);
-      form.reset();
-    })
-    .catch(error => {
-      console.error('Error submitting project:', error);
-      
-      // Still update local state even if API fails
-      if (onProjectCreated) {
-        onProjectCreated(values);
-      }
-      
-      // For development: Still close the dialog and reset form even on error
-      setOpen(false);
-      form.reset();
-      
-      // In production, you might want to show an error message instead
-      // alert(`Failed to save project: ${error.message}`);
-    });
+
+      // Close the dialog and reset form
+      setOpen(false)
+      form.reset()
+      toast.success("Project created successfully!")
+    } catch (error) {
+      console.error("Error creating project:", error)
+      toast.error("Failed to create project. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -281,10 +306,15 @@ export function CreateProjectDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="manager1">Alice Johnson</SelectItem>
-                        <SelectItem value="manager2">Bob Smith</SelectItem>
-                        <SelectItem value="manager3">Charlie Davis</SelectItem>
-                        <SelectItem value="manager4">Diana Miller</SelectItem>
+                        {teamMembers.length > 0 ? (
+                          teamMembers.map((member) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>No team members found</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -301,15 +331,19 @@ export function CreateProjectDialog({
                     <Select value={field.value || ""} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select department" />
+                          <SelectValue placeholder={fetchingDepartments ? "Loading departments..." : "Select department"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="engineering">Engineering</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="sales">Sales</SelectItem>
-                        <SelectItem value="design">Design</SelectItem>
-                        <SelectItem value="product">Product</SelectItem>
+                        {departments.length > 0 ? (
+                          departments.map((department) => (
+                            <SelectItem key={department.id} value={department.id || "undefined-dept"}>
+                              {department.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-departments" disabled>No departments found</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

@@ -3,15 +3,21 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-// import { AuthModule } from './auth/auth.module'; // Commented out: Not created yet
-// import { TagsModule } from './tags/tags.module'; // Commented out: Not created yet
+import { AuthModule } from './auth/auth.module';
+import { TagsModule } from './tags/tags.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ProjectsModule } from './projects/projects.module';
 import { UsersModule } from './users/users.module';
 import { SeedModule } from './seed/seed.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { DepartmentsModule } from './departments/departments.module';
+import { RolesModule } from './roles/roles.module';
 import { User } from './users/entities/user.entity';
 import { Task } from './tasks/entities/task.entity';
 import { Project } from './projects/entities/project.entity';
+import { Tag } from './tags/entities/tag.entity';
+import { Department } from './departments/entities/department.entity';
+import { Role } from './roles/entities/role.entity';
 
 @Module({
   imports: [
@@ -29,21 +35,21 @@ import { Project } from './projects/entities/project.entity';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Task, Project], // Explicit entity list
+        entities: [User, Task, Project, Tag, Department, Role], // Added Department and Role entities
         synchronize: true, // Always true for now during development
         logging: true,     // Always log SQL queries
-        ssl: {
-          rejectUnauthorized: false, // Required for DigitalOcean managed databases
-        },
         autoLoadEntities: true,
       }),
     }),
-    // AuthModule, // Commented out
+    AuthModule,
     UsersModule,
     ProjectsModule,
     TasksModule,
-    // TagsModule, // Commented out
+    TagsModule,
     SeedModule,
+    AnalyticsModule,
+    DepartmentsModule,
+    RolesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

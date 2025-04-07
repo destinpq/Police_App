@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -24,6 +24,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
+import api from "@/lib/api"
+import { toast } from "sonner"
+import { useTeam } from "@/contexts/team-context"
 
 const formSchema = z.object({
   title: z
@@ -67,6 +71,9 @@ export function CreateTaskDialog({
   fullWidth = false,
 }: CreateTaskDialogProps) {
   const [open, setOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const { teamMembers } = useTeam()
+  const [projects, setProjects] = useState<{id: string, name: string}[]>([])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -82,38 +89,59 @@ export function CreateTaskDialog({
     },
   })
 
-  function onSubmit(values: FormValues) {
-    // In a real app, you would send this to your API
-    console.log(values)
+  useEffect(() => {
+    if (open) {
+      fetchProjects()
+    }
+  }, [open])
 
-    // Try to connect to the API endpoint with better error handling
-    fetchFromApi('tasks', {
-      method: 'POST',
-      body: JSON.stringify(values),
-    })
-    .then(data => {
-      console.log('Success:', data);
-      if (onTaskCreated) {
-        onTaskCreated(values);
+  const fetchProjects = async () => {
+    try {
+      const projectsData = await api.projects.getAll()
+      setProjects(projectsData)
+    } catch (error) {
+      console.error("Error fetching projects:", error)
+      toast.error("Failed to load projects")
+    }
+  }
+
+  async function onSubmit(values: FormValues) {
+    try {
+      setIsLoading(true)
+      
+      // Create a formatted version of the task to send to the API
+      const taskData = {
+        ...values,
+        // Format tags if they exist
+        tags: values.tags ? values.tags.split(',').map(tag => tag.trim()).join(',') : undefined
       }
-      setOpen(false);
-      form.reset();
-    })
-    .catch(error => {
-      console.error('Error submitting task:', error);
       
-      // Still update local state even if API fails
-      if (onTaskCreated) {
-        onTaskCreated(values);
+      // Send the data to the API
+      const response = await api.tasks.create(taskData)
+      
+      // Extract the created task ID and add it to our form values
+      const newTask = {
+        ...values,
+        id: response.id || `task-${Date.now()}` // Use the ID from response or generate a fallback
       }
       
-      // For development: Still close the dialog and reset form even on error
-      setOpen(false);
-      form.reset();
-      
-      // In production, you might want to show an error message instead
-      // alert(`Failed to save task: ${error.message}`);
-    });
+      console.log("Created task:", newTask)
+
+      // Call the onTaskCreated callback if provided
+      if (onTaskCreated) {
+        onTaskCreated(newTask)
+      }
+
+      // Close the dialog and reset form
+      setOpen(false)
+      form.reset()
+      toast.success("Task created successfully!")
+    } catch (error) {
+      console.error("Error creating task:", error)
+      toast.error("Failed to create task. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -247,10 +275,15 @@ export function CreateTaskDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="user1">Alice Johnson</SelectItem>
-                        <SelectItem value="user2">Bob Smith</SelectItem>
-                        <SelectItem value="user3">Charlie Davis</SelectItem>
-                        <SelectItem value="user4">Diana Miller</SelectItem>
+                        {teamMembers.length > 0 ? (
+                          teamMembers.map((member) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-members" disabled>No team members found</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -273,10 +306,15 @@ export function CreateTaskDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="project1">Website Redesign</SelectItem>
-                        <SelectItem value="project2">Mobile App</SelectItem>
-                        <SelectItem value="project3">Marketing Campaign</SelectItem>
-                        <SelectItem value="project4">Product Launch</SelectItem>
+                        {projects.length > 0 ? (
+                          projects.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-projects" disabled>No projects found</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

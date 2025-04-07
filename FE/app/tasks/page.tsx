@@ -9,24 +9,39 @@ import { TaskFilter } from "@/components/task-filter"
 import { EditTaskDialog } from "@/components/edit-task-dialog"
 import { Button } from "@/components/ui/button"
 import { fetchFromApi } from "@/lib/api-utils"
+import api from "@/lib/api"
+import { useRouter } from "next/navigation"
+import { 
+  Task, 
+  TaskFormValues, 
+  TaskApiResponse, 
+  adaptFormToTask, 
+  adaptApiToTask, 
+  formatTaskForDisplay
+} from "@/lib/task-adapter"
+import { toast } from "sonner"
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch tasks from API
   useEffect(() => {
     const fetchTasks = async () => {
       try {
         setLoading(true);
-        const data = await fetchFromApi('tasks');
-        console.log('Fetched tasks:', data);
-        setTasks(data);
+        const apiData = await fetchFromApi('tasks') as TaskApiResponse[];
+        
+        // Convert API data to our standard Task format
+        const standardizedTasks = apiData.map(adaptApiToTask);
+        
+        console.log('Fetched tasks:', standardizedTasks);
+        setTasks(standardizedTasks);
         setError(null);
       } catch (err) {
         console.error('Error fetching tasks:', err);
-        setError(err?.message || 'Failed to fetch tasks');
+        setError(err instanceof Error ? err.message : 'Failed to fetch tasks');
       } finally {
         setLoading(false);
       }
@@ -35,19 +50,82 @@ export default function TasksPage() {
     fetchTasks();
   }, []);
 
-  // Handle task creation
-  const handleTaskCreated = (newTask) => {
-    setTasks(prevTasks => [...prevTasks, newTask]);
+  // Add a function to notify analytics system of changes
+  const notifyAnalyticsOfChanges = async () => {
+    try {
+      // This is a simple implementation. In a production app, you might use:
+      // 1. WebSockets for real-time updates
+      // 2. A dedicated event bus
+      // 3. An invalidation pattern with React Query or SWR
+      
+      // For this demo, we'll just trigger refetching in any open analytics tabs
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('analytics:refresh'));
+      }
+    } catch (error) {
+      console.error("Failed to notify analytics of changes:", error);
+    }
   };
 
-  // Update the delete task handler
-  const handleDeleteTask = (taskId) => {
-    fetchFromApi(`tasks/${taskId}`, { method: 'DELETE' })
-      .then(() => {
-        // Remove from state
-        setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
-      })
-      .catch(err => console.error('Error deleting task:', err));
+  // Handle task creation from CreateTaskDialog
+  const handleTaskCreated = async (formValues: TaskFormValues) => {
+    // Convert form values to standard Task format
+    const newTask = adaptFormToTask(formValues);
+    
+    setTasks(prevTasks => [...prevTasks, newTask]);
+    await notifyAnalyticsOfChanges();
+  };
+
+  // Handle task creation from TaskBoard
+  const handleTaskBoardCreated = async (task: Task) => {
+    setTasks(prevTasks => [...prevTasks, task]);
+    await notifyAnalyticsOfChanges();
+  };
+
+  // Update task editing handlers
+  const handleTaskUpdated = async (updatedTask: any) => {
+    try {
+      // Format date if it exists and is a Date object
+      const formattedTask = {
+        ...updatedTask,
+        dueDate: updatedTask.dueDate instanceof Date
+          ? updatedTask.dueDate.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : updatedTask.dueDate
+      };
+      
+      // Ensure the task has the correct format for the API
+      await api.tasks.update(updatedTask.id, formattedTask);
+      
+      // Update local state
+      setTasks(prevTasks => 
+        prevTasks.map(t => t.id === updatedTask.id ? formattedTask : t)
+      );
+      await notifyAnalyticsOfChanges();
+    } catch (err) {
+      console.error('Error updating task:', err);
+      toast.error('Failed to update task');
+    }
+  };
+
+  // Update task deletion handlers
+  const handleTaskDeleted = async (taskId: string) => {
+    try {
+      const response = await api.tasks.delete(taskId);
+      console.log("Delete task response:", response);
+      
+      // Remove from state
+      setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+      await notifyAnalyticsOfChanges();
+      
+      toast.success(response.message || "Task deleted successfully");
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      toast.error(err instanceof Error ? err.message : "Failed to delete task");
+    }
   };
 
   return (
@@ -89,7 +167,12 @@ export default function TasksPage() {
                 <CardDescription>Manage your tasks using the Kanban board</CardDescription>
               </CardHeader>
               <CardContent>
-                <TaskBoard initialTasks={tasks} onTaskCreated={handleTaskCreated} />
+                <TaskBoard 
+                  initialTasks={tasks} 
+                  onTaskCreated={handleTaskBoardCreated}
+                  onTaskUpdated={handleTaskUpdated}
+                  onTaskDeleted={handleTaskDeleted}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -112,77 +195,80 @@ export default function TasksPage() {
                   </div>
 
                   {tasks.length === 0 ? (
-                    <div className="py-8 text-center text-muted-foreground">No tasks found</div>
+                    <div key="no-tasks" className="py-8 text-center text-muted-foreground">No tasks found</div>
                   ) : (
-                    tasks.map((task, i) => (
-                      <div key={task.id || i} className="grid grid-cols-12 border-b px-4 py-3 last:border-0 items-center">
-                        <div className="col-span-6 sm:col-span-5 md:col-span-4 font-medium truncate">{task.title}</div>
-                        <div className="col-span-3 sm:col-span-2 text-center">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              task.status === "todo"
-                                ? "bg-blue-100 text-blue-800"
-                                : task.status === "in-progress"
-                                  ? "bg-amber-100 text-amber-800"
-                                  : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {task.status === "todo" ? "To Do" : task.status === "in-progress" ? "In Progress" : "Done"}
-                          </span>
-                        </div>
-                        <div className="col-span-3 sm:col-span-2 hidden sm:block text-center">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              task.priority === "high"
-                                ? "bg-rose-100 text-rose-800"
-                                : task.priority === "medium"
-                                  ? "bg-amber-100 text-amber-800"
-                                  : "bg-emerald-100 text-emerald-800"
-                            }`}
-                          >
-                            {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                          </span>
-                        </div>
-                        <div className="col-span-2 hidden md:block truncate">{task.assignee}</div>
-                        <div className="col-span-2 hidden lg:block text-muted-foreground">
-                          {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : ""}
-                        </div>
-                        <div className="col-span-3 sm:col-span-1 flex items-center justify-end sm:justify-center gap-1">
-                          <EditTaskDialog
-                            task={task}
-                            onTaskUpdated={(updatedTask) => {
-                              console.log("Task updated:", updatedTask)
-                              // Update task in state
-                              setTasks(prevTasks => 
-                                prevTasks.map(t => t.id === updatedTask.id ? updatedTask : t)
-                              );
-                            }}
-                          />
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive h-8 w-8"
-                            onClick={() => handleDeleteTask(task.id)}
-                          >
-                            <svg
-                              width="15"
-                              height="15"
-                              viewBox="0 0 15 15"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
+                    tasks.map((task, i) => {
+                      // Format the task for display
+                      const displayTask = formatTaskForDisplay(task);
+                      
+                      return (
+                        <div key={task.id || i} className="grid grid-cols-12 border-b px-4 py-3 last:border-0 items-center">
+                          <div className="col-span-6 sm:col-span-5 md:col-span-4 font-medium truncate">{task.title}</div>
+                          <div className="col-span-3 sm:col-span-2 text-center">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                task.status === "todo"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : task.status === "in-progress"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-green-100 text-green-800"
+                              }`}
                             >
-                              <path
-                                d="M5.5 1C5.22386 1 5 1.22386 5 1.5C5 1.77614 5.22386 2 5.5 2H9.5C9.77614 2 10 1.77614 10 1.5C10 1.22386 9.77614 1 9.5 1H5.5ZM3 3.5C3 3.22386 3.22386 3 3.5 3H5H10H11.5C11.7761 3 12 3.22386 12 3.5C12 3.77614 11.7761 4 11.5 4H11V12C11 12.5523 10.5523 13 10 13H5C4.44772 13 4 12.5523 4 12V4H3.5C3.22386 4 3 3.77614 3 3.5ZM5 4H10V12H5V4Z"
-                                fill="currentColor"
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                              ></path>
-                            </svg>
-                          </Button>
+                              {displayTask.statusDisplay}
+                            </span>
+                          </div>
+                          <div className="col-span-3 sm:col-span-2 hidden sm:block text-center">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                task.priority === "high"
+                                  ? "bg-rose-100 text-rose-800"
+                                  : task.priority === "medium"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-emerald-100 text-emerald-800"
+                              }`}
+                            >
+                              {displayTask.priorityDisplay}
+                            </span>
+                          </div>
+                          <div className="col-span-2 hidden md:block truncate">{task.assignee}</div>
+                          <div className="col-span-2 hidden lg:block text-muted-foreground">
+                            {displayTask.formattedDueDate}
+                          </div>
+                          <div className="col-span-3 sm:col-span-1 flex items-center justify-end sm:justify-center gap-1">
+                            <EditTaskDialog
+                              task={task}
+                              onTaskUpdated={(updatedTask) => {
+                                console.log("Task updated:", updatedTask)
+                                // Update task in state
+                                handleTaskUpdated(updatedTask);
+                              }}
+                            />
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive h-8 w-8"
+                              onClick={() => handleTaskDeleted(task.id)}
+                            >
+                              <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 15 15"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                              >
+                                <path
+                                  d="M5.5 1C5.22386 1 5 1.22386 5 1.5C5 1.77614 5.22386 2 5.5 2H9.5C9.77614 2 10 1.77614 10 1.5C10 1.22386 9.77614 1 9.5 1H5.5ZM3 3.5C3 3.22386 3.22386 3 3.5 3H5H10H11.5C11.7761 3 12 3.22386 12 3.5C12 3.77614 11.7761 4 11.5 4H11V12C11 12.5523 10.5523 13 10 13H5C4.44772 13 4 12.5523 4 12V4H3.5C3.22386 4 3 3.77614 3 3.5ZM5 4H10V12H5V4Z"
+                                  fill="currentColor"
+                                  fillRule="evenodd"
+                                  clipRule="evenodd"
+                                ></path>
+                              </svg>
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </CardContent>
