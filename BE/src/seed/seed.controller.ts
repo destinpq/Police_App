@@ -1,4 +1,4 @@
-import { Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { SeedService } from './seed.service';
 
 @Controller('seed')
@@ -7,13 +7,19 @@ export class SeedController {
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  async seed() {
-    return this.seedService.seed();
+  async seedDatabase() {
+    await this.seedService.seed();
+    return { message: 'Database seeded successfully' };
   }
 
   @Post('truncate')
   @HttpCode(HttpStatus.OK)
   async truncate() {
     return this.seedService.truncate();
+  }
+
+  @Get()
+  getSeedStatus() {
+    return { message: 'Seed endpoint is available. Use POST to trigger seeding.' };
   }
 } 

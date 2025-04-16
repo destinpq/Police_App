@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-04-13T14:38:03.662Z",
+  "success": true,
+  "database": {
+    "host": "localhost",
+    "port": "5432",
+    "username": "postgres",
+    "database": "task_tracker_db",
+    "tables": [
+      "departments",
+      "migrations",
+      "projects",
+      "roles",
+      "tags",
+      "tasks",
+      "users"
+    ]
+  }
+}

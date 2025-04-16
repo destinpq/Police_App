@@ -27,9 +27,10 @@ const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
 
 interface AnalyticsChartsProps {
   view?: "personal" | "team" | "organization"
+  userId?: string
 }
 
-export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
+export function AnalyticsCharts({ view = "personal", userId }: AnalyticsChartsProps) {
   const [activeTab, setActiveTab] = useState("performance")
   const [chartType, setChartType] = useState("line")
   const [loading, setLoading] = useState(true)
@@ -37,7 +38,6 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
   
   // Real data from backend
   const [weeklyActivity, setWeeklyActivity] = useState<any[]>([])
-  const [categoryDistribution, setCategoryDistribution] = useState<any[]>([])
   const [teamPerformance, setTeamPerformance] = useState<any[]>([])
   const [monthlyTrends, setMonthlyTrends] = useState<any[]>([])
 
@@ -47,29 +47,34 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
       setLoading(true)
       setError(null)
       
-      // Get the appropriate user ID based on view
-      const userId = view === "personal" ? "1" : undefined
+      const params = {}
+      const analyticsAPI = api?.analytics || {}
+      
+      // Define safe API getters
+      const getWeeklyActivity = analyticsAPI.getWeeklyActivity || (() => Promise.resolve([]))
+      const getTeamPerformance = analyticsAPI.getTeamPerformance || (() => Promise.resolve([]))
+      const getMonthlyTrends = analyticsAPI.getMonthlyTrends || (() => Promise.resolve([]))
       
       // Fetch the data in parallel
-      const [weeklyData, categoryData, teamData, trendsData] = await Promise.all([
-        api.analytics.getWeeklyActivity(userId),
-        api.analytics.getCategoryDistribution(userId),
-        api.analytics.getTeamPerformance(),
-        api.analytics.getMonthlyTrends(userId),
+      const [weeklyData, teamData, trendsData] = await Promise.all([
+        getWeeklyActivity(params),
+        getTeamPerformance(params),
+        getMonthlyTrends(params),
       ])
       
-      setWeeklyActivity(weeklyData || [])
-      setCategoryDistribution(categoryData || [])
-      setTeamPerformance(teamData || [])
-      setMonthlyTrends(trendsData || [])
+      // Set state, ensuring all data is properly formatted as arrays
+      setWeeklyActivity(Array.isArray(weeklyData) ? weeklyData : [])
+      setTeamPerformance(Array.isArray(teamData) ? teamData : [])
+      setMonthlyTrends(Array.isArray(trendsData) ? trendsData : [])
+
     } catch (err: any) {
       console.error("Error fetching analytics data:", err)
-      setError(err?.message || "Failed to load analytics data")
-      toast.error("Failed to load analytics data")
+      const errorMessage = err.message || "Failed to load analytics data"
+      setError(errorMessage)
+      toast.error(errorMessage)
       
-      // Reset data to empty arrays instead of using fallbacks
+      // Reset data to empty arrays on error
       setWeeklyActivity([])
-      setCategoryDistribution([])
       setTeamPerformance([])
       setMonthlyTrends([])
     } finally {
@@ -80,7 +85,7 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
   // Initial data load on component mount or view change
   useEffect(() => {
     fetchAnalyticsData()
-  }, [view])
+  }, [view, userId])
 
   // Add event listener for analytics refresh
   useEffect(() => {
@@ -96,7 +101,7 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
     return () => {
       window.removeEventListener('analytics:refresh', handleAnalyticsRefresh)
     }
-  }, [view]) // Re-add when view changes
+  }, [view, userId]) // Re-add when view changes
 
   // Empty state component for no data
   const EmptyState = ({ message = "No data available" }) => (
@@ -145,7 +150,7 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
               <TabsContent value="line" className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={weeklyActivity}
+                    data={Array.isArray(weeklyActivity) ? weeklyActivity : []}
                     margin={{
                       top: 10,
                       right: 30,
@@ -185,7 +190,7 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
               <TabsContent value="area" className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
-                    data={weeklyActivity}
+                    data={Array.isArray(weeklyActivity) ? weeklyActivity : []}
                     margin={{
                       top: 10,
                       right: 30,
@@ -219,7 +224,7 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
               <TabsContent value="bar" className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={weeklyActivity}
+                    data={Array.isArray(weeklyActivity) ? weeklyActivity : []}
                     margin={{
                       top: 10,
                       right: 30,
@@ -238,48 +243,6 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
                 </ResponsiveContainer>
               </TabsContent>
             </Tabs>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Category Distribution</CardTitle>
-          <CardDescription>
-            {view === "personal"
-              ? "Your tasks by category"
-              : view === "team"
-                ? "Team tasks by category"
-                : "Organization tasks by category"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {categoryDistribution.length === 0 ? (
-            <EmptyState message="No category distribution data available" />
-          ) : (
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    nameKey="name"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {categoryDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
           )}
         </CardContent>
       </Card>
@@ -308,7 +271,7 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={teamPerformance}
+                  data={Array.isArray(teamPerformance) ? teamPerformance : []}
                   margin={{
                     top: 10,
                     right: 30,
@@ -348,7 +311,7 @@ export function AnalyticsCharts({ view = "personal" }: AnalyticsChartsProps) {
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
-                  data={monthlyTrends}
+                  data={Array.isArray(monthlyTrends) ? monthlyTrends : []}
                   margin={{
                     top: 10,
                     right: 30,

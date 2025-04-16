@@ -13,9 +13,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 interface Message {
   id: string
   sender: string
-  senderName: string
+  senderName: string | { id: string; name: string }
   senderAvatar?: string
-  content: string
+  content: string | object
   timestamp: Date
 }
 
@@ -25,6 +25,18 @@ interface TeamMember {
   email: string
   avatar?: string
   role?: string
+}
+
+// API response interfaces
+interface UserApiResponse {
+  id: string
+  name: string
+  email: string
+  avatar?: string | null
+  role?: { id: string; name: string; description?: string } | null
+  department?: { id: string; name: string; description?: string } | null
+  // Add other possible fields here
+  updatedAt: string
 }
 
 export function TeamChat() {
@@ -43,12 +55,27 @@ export function TeamChat() {
   const fetchTeamMembers = async () => {
     try {
       setIsLoading(true)
-      const members = await api.teamMembers.getAll()
-      setTeamMembers(members)
+      const members = await api.teamMembers.getAll() as UserApiResponse[];
+      // Convert UserApiResponse to TeamMember
+      const teamMembers: TeamMember[] = members.map(member => ({
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        avatar: member.avatar || undefined,
+        role: member.role?.name || undefined
+      }));
+      setTeamMembers(teamMembers);
       
       // Set current user (would normally come from auth context)
       if (members.length > 0) {
-        setCurrentUser(members[0])
+        const currentUser: TeamMember = {
+          id: members[0].id,
+          name: members[0].name,
+          email: members[0].email,
+          avatar: members[0].avatar || undefined,
+          role: members[0].role?.name || undefined
+        };
+        setCurrentUser(currentUser);
       }
     } catch (error) {
       console.error("Failed to fetch team members:", error)
@@ -72,7 +99,7 @@ export function TeamChat() {
     if (!newMessage.trim() || !currentUser) return
 
     const message: Message = {
-      id: Date.now().toString(),
+      id: Math.random().toString(36).substring(2, 9),
       sender: currentUser.id,
       senderName: currentUser.name,
       senderAvatar: currentUser.avatar,
@@ -85,12 +112,17 @@ export function TeamChat() {
   }
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
   }
 
   // Get avatar initials from name
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase()
+  const getInitials = (name: string | { id: string; name: string }) => {
+    if (typeof name === 'object' && name !== null) {
+      return name.name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
   // Check if message is from current user
@@ -117,15 +149,19 @@ export function TeamChat() {
                     <AvatarFallback>{getInitials(message.senderName)}</AvatarFallback>
                   </Avatar>
                 )}
-                <span className="font-medium text-sm">{message.senderName}</span>
-                <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
-              </div>
-              <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                  isFromCurrentUser(message.sender) ? "bg-primary text-primary-foreground" : "bg-muted"
-                }`}
-              >
-                {message.content}
+                <div className="flex flex-col">
+                  <div className="font-medium">
+                    {typeof message.senderName === 'string' 
+                      ? message.senderName 
+                      : message.senderName?.name || 'Unknown'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {typeof message.content === 'string' 
+                      ? message.content 
+                      : (message.content ? JSON.stringify(message.content) : '')}
+                  </div>
+                </div>
+                <span className="text-xs text-muted-foreground">{formatTime(new Date(message.timestamp))}</span>
               </div>
             </div>
           ))

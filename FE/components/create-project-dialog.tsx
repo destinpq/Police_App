@@ -79,9 +79,7 @@ export function CreateProjectDialog({
 }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [fetchingDepartments, setFetchingDepartments] = useState(false)
-  const { teamMembers } = useTeam()
+  const { teamMembers, departments } = useTeam()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -98,48 +96,91 @@ export function CreateProjectDialog({
     },
   })
 
-  // Fetch departments when dialog opens
-  useEffect(() => {
-    if (open) {
-      fetchDepartments();
-    }
-  }, [open]);
-
-  const fetchDepartments = async () => {
-    setFetchingDepartments(true);
-    try {
-      const departmentsData = await api.departments.getAll();
-      setDepartments(departmentsData);
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-      toast.error("Failed to load departments");
-    } finally {
-      setFetchingDepartments(false);
-    }
-  };
+  // No need to fetch departments as they're already available from TeamContext
 
   async function onSubmit(values: FormValues) {
     try {
       setIsLoading(true)
       
+      // Define a type for the project data
+      interface ProjectData {
+        name: string;
+        description: string;
+        status: string;
+        priority: string;
+        startDate?: string;
+        endDate?: string;
+        managerId?: string;
+        departmentId?: string;
+        budget?: string;
+        tags?: string;
+      }
+      
+      // Create a clean project data object without undefined values
+      let projectData: ProjectData = {
+        name: values.name,
+        description: values.description,
+        status: values.status,
+        priority: values.priority
+      };
+      
+      // Only add non-empty fields
+      if (values.startDate) {
+        const startDate = new Date(values.startDate);
+        projectData.startDate = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+      }
+      
+      if (values.endDate) {
+        const endDate = new Date(values.endDate);
+        projectData.endDate = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+      }
+      
+      // UUID validation regex pattern
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      // Only add manager if it's a valid UUID
+      if (values.manager && values.manager !== 'none' && uuidPattern.test(values.manager)) {
+        projectData.managerId = values.manager;
+      }
+      
+      // Only add department if it's a valid UUID
+      if (values.department && values.department !== 'none' && uuidPattern.test(values.department)) {
+        projectData.departmentId = values.department;
+      }
+      
+      if (values.budget && values.budget.trim() !== '') {
+        projectData.budget = values.budget;
+      }
+      
+      if (values.tags && values.tags.trim() !== '') {
+        projectData.tags = values.tags;
+      }
+      
+      console.log("Sending project data:", projectData);
+      
       // Send the data to the API
-      const newProject = await api.projects.create(values)
-      console.log("Created project:", newProject)
+      const newProject = await api.projects.create(projectData);
+      console.log("Created project:", newProject);
 
       // Call the onProjectCreated callback if provided
       if (onProjectCreated) {
-        onProjectCreated(values)
+        onProjectCreated(values);
+      }
+
+      // Refresh analytics data if available
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('analytics:refresh'));
       }
 
       // Close the dialog and reset form
-      setOpen(false)
-      form.reset()
-      toast.success("Project created successfully!")
+      setOpen(false);
+      form.reset();
+      toast.success("Project created successfully!");
     } catch (error) {
-      console.error("Error creating project:", error)
-      toast.error("Failed to create project. Please try again.")
+      console.error("Error creating project:", error);
+      toast.error("Failed to create project. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -299,7 +340,7 @@ export function CreateProjectDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Project Manager</FormLabel>
-                    <Select value={field.value || ""} onValueChange={field.onChange}>
+                    <Select value={field.value || "none"} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select manager" />
@@ -313,7 +354,7 @@ export function CreateProjectDialog({
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>No team members found</SelectItem>
+                          <SelectItem value="none" disabled>No team members found</SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -328,21 +369,21 @@ export function CreateProjectDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Department</FormLabel>
-                    <Select value={field.value || ""} onValueChange={field.onChange}>
+                    <Select value={field.value || "none"} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={fetchingDepartments ? "Loading departments..." : "Select department"} />
+                          <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {departments.length > 0 ? (
                           departments.map((department) => (
-                            <SelectItem key={department.id} value={department.id || "undefined-dept"}>
+                            <SelectItem key={department.id} value={department.id}>
                               {department.name}
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="no-departments" disabled>No departments found</SelectItem>
+                          <SelectItem value="none" disabled>No departments found</SelectItem>
                         )}
                       </SelectContent>
                     </Select>

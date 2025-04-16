@@ -14,9 +14,9 @@ export class Role {
   @Column({ nullable: true, default: false })
   isAdmin: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 } 

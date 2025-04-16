@@ -3,7 +3,7 @@
 # Script to set environment variables for the build process
 
 # Set the API URL environment variable
-export NEXT_PUBLIC_API_URL="https://octopus-app-ct5vs.ondigitalocean.app/api"
+export NEXT_PUBLIC_API_URL="http://localhost:3001/api"
 
 echo "Environment set: NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
 

@@ -13,8 +13,16 @@ export class RolesController {
   }
 
   @Get()
-  findAll() {
-    return this.rolesService.findAll();
+  async findAll() {
+    console.log("GET /roles - Fetching all roles");
+    try {
+      const roles = await this.rolesService.findAll();
+      console.log(`Found ${roles.length} roles:`, roles);
+      return roles;
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      throw error;
+    }
   }
 
   @Get(':id')

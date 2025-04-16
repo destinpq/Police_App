@@ -1,18 +1,41 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserDto } from './create-user.dto';
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength, IsUUID } from 'class-validator';
 
-// Use PartialType to make all fields optional
-// Exclude email as it's usually not updated directly
-export class UpdateUserDto extends PartialType(
-  CreateUserDto,
-) {
-  // Optionally override or add specific validation for update
+export class UpdateUserDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  // Email should not be updatable here usually
+  // @IsOptional()
+  // @IsEmail()
+  // email?: string;
+
   @IsOptional()
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   password?: string;
 
-  // Prevent email update via this DTO if desired
-  email?: never; 
+  @IsOptional()
+  @IsUUID()
+  roleId?: string | null;
+
+  @IsOptional()
+  @IsUUID()
+  departmentId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  skills?: string;
+
+  @IsOptional()
+  @IsString()
+  avatar?: string;
 } 

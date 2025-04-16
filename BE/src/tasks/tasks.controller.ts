@@ -13,8 +13,14 @@ export class TasksController {
   }
 
   @Get()
-  findAll() {
-    return this.tasksService.findAll();
+  async findAll() {
+    try {
+      const tasks = await this.tasksService.findAll();
+      return tasks;
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      throw error; // Let the exception filter handle the error response
+    }
   }
 
   @Get(':id')

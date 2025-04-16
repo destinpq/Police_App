@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDateString, IsUUID } from 'class-validator';
 
 export class CreateProjectDto {
   @IsString()
@@ -20,12 +20,13 @@ export class CreateProjectDto {
   @IsEnum(['low', 'medium', 'high'])
   priority: 'low' | 'medium' | 'high';
 
-  @IsString()
-  manager: string;
+  @IsOptional()
+  @IsUUID()
+  managerId?: string;
 
   @IsOptional()
-  @IsString()
-  department?: string;
+  @IsUUID()
+  departmentId?: string;
 
   @IsOptional()
   @IsString()

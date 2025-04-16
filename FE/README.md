@@ -1,71 +1,80 @@
-# Frontend Application
+# Task Tracker Application
 
-This is the frontend application for the task management system.
-
-## Development Setup
-
-### Prerequisites
-
-- Node.js 18+ 
-- npm or yarn
-
-### Installation
-
-```bash
-# Navigate to the frontend directory
-cd FE
-
-# Install dependencies
-npm install
-# or
-yarn install
-```
-
-### Running in Development Mode
-
-```bash
-# Start the development server
-npm run dev
-# or
-yarn dev
-```
-
-The application will be available at [http://localhost:3000](http://localhost:3000).
-
-## Environment Variables
-
-The application uses the following environment variables:
-
-- `NEXT_PUBLIC_API_URL`: The URL of the backend API
-  - In development, the application will use local API routes at `/api`
-  - In production, it will use the specified API URL or fallback to the DigitalOcean URL
-
-## Local Development with Mock API
-
-This application includes mock API routes in `app/api/` that provide sample data for development purposes. These routes are automatically used in development mode.
-
-Available mock endpoints:
-- `/api/tasks` - Get and create tasks
-- `/api/projects` - Get and create projects
-
-## Deployment
-
-The application is configured for deployment on DigitalOcean App Platform. Deployment configurations are in:
-- `.do/app.yaml` - DigitalOcean App Platform configuration
-- `project.toml` - Build configuration
+A comprehensive task tracking application built with Next.js, React, and TypeScript.
 
 ## Features
 
-- Task Management with drag-and-drop functionality
-- Project Management
-- User-friendly UI with responsive design
-- Team collaboration features
+- Task management with status tracking
+- Project organization
+- Team collaboration
+- Analytics dashboard
+- User authentication
+- Responsive design
 
-## Troubleshooting
+## Tech Stack
 
-If you encounter issues with API connections:
-1. Check browser console for API URL being used
-2. Verify the environment variables are set correctly
-3. Check the network tab for request/response details
+- **Frontend:** Next.js, React, TypeScript, TailwindCSS
+- **UI Components:** Shadcn UI
+- **State Management:** React Context API
+- **Authentication:** Custom auth implementation
 
-For development, the app uses mock API routes that provide sample data for testing. 
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- Yarn or npm
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/task-tracker.git
+   cd task-tracker
+   ```
+
+2. Install dependencies:
+   ```bash
+   yarn install
+   # or
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   yarn dev
+   # or
+   npm run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+- `/app`: Next.js app directory with layouts and pages
+- `/components`: Reusable React components
+- `/contexts`: React context providers
+- `/hooks`: Custom React hooks
+- `/lib`: Utility functions and API services
+- `/public`: Static assets
+
+## API Integration
+
+- The application connects to a backend API for data persistence.
+- In development, the application will connect to the API specified in the environment variables.
+
+## Deployment
+
+This application can be deployed to any platform that supports Next.js applications.
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 

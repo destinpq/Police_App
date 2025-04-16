@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarIcon, Plus } from "lucide-react"
 import { format } from "date-fns"
-import { fetchFromApi } from "@/lib/api-utils"
+import { fetchFromApi, refreshAnalytics } from "@/lib/api-utils"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 import api from "@/lib/api"
 import { toast } from "sonner"
 import { useTeam } from "@/contexts/team-context"
+import { TaskFormData } from "@/lib/types"
 
 const formSchema = z.object({
   title: z
@@ -62,6 +63,7 @@ interface CreateTaskDialogProps {
   buttonVariant?: "default" | "outline" | "secondary" | "ghost" | "link"
   buttonSize?: "default" | "sm" | "lg" | "icon"
   fullWidth?: boolean
+  projectId?: string
 }
 
 export function CreateTaskDialog({
@@ -69,6 +71,7 @@ export function CreateTaskDialog({
   buttonVariant = "default",
   buttonSize = "default",
   fullWidth = false,
+  projectId,
 }: CreateTaskDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -83,11 +86,17 @@ export function CreateTaskDialog({
       priority: "medium",
       status: "todo",
       assignee: "",
-      project: "",
+      project: projectId || "",
       tags: "",
       estimatedHours: "",
     },
   })
+
+  useEffect(() => {
+    if (projectId && open) {
+      form.setValue("project", projectId)
+    }
+  }, [projectId, open, form])
 
   useEffect(() => {
     if (open) {
@@ -97,50 +106,119 @@ export function CreateTaskDialog({
 
   const fetchProjects = async () => {
     try {
-      const projectsData = await api.projects.getAll()
-      setProjects(projectsData)
+      // Add a console log for debugging
+      console.log("Fetching projects...");
+      
+      // Instead of directly using api.projects.getAll, add more error handling
+      let projectsData: {id: string, name: string}[] = [];
+      try {
+        projectsData = await api.projects.getAll();
+      } catch (apiError) {
+        console.error("API error fetching projects:", apiError);
+        // If we got a 500 error, continue with empty data
+        if (apiError instanceof Error && apiError.message.includes('500')) {
+          console.warn("Server error fetching projects, continuing with empty data");
+          // Don't show error toast for 500 errors to avoid overwhelming the user
+          projectsData = [];
+        } else {
+          // For other errors, rethrow to be handled by the outer catch
+          throw apiError;
+        }
+      }
+      
+      console.log("Projects data:", projectsData);
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
     } catch (error) {
-      console.error("Error fetching projects:", error)
-      toast.error("Failed to load projects")
+      console.error("Error fetching projects:", error);
+      
+      // Show a more helpful error message
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+          toast.error("Could not connect to the server. Please check your connection.");
+        } else {
+          toast.error("Error loading projects. Please try again later.");
+        }
+      } else {
+        toast.error("Failed to load projects");
+      }
+      
+      // Set empty projects array to ensure the form still works
+      setProjects([]);
     }
   }
 
   async function onSubmit(values: FormValues) {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       
-      // Create a formatted version of the task to send to the API
-      const taskData = {
-        ...values,
-        // Format tags if they exist
-        tags: values.tags ? values.tags.split(',').map(tag => tag.trim()).join(',') : undefined
+      // Log the values being sent to the API
+      console.log("Creating task with values:", values);
+      
+      // Create a clean task data object directly passing values to the task adapter
+      const taskData: TaskFormData = {
+        title: values.title,
+        description: values.description || "",
+        priority: values.priority,
+        status: values.status,
+        dueDate: values.dueDate,
+        estimatedHours: values.estimatedHours?.toString() || undefined,
+        tags: values.tags?.trim() || "",
+        assignee: values.assignee,
+        project: values.project
+      };
+      
+      console.log("Sending task data to API:", taskData);
+      
+      // Send the data to the API directly
+      let response;
+      try {
+        response = await api.tasks.create(taskData);
+        console.log("Task created successfully:", response);
+      } catch (apiError: any) {
+        console.error("API error creating task:", apiError);
+        
+        // Handle specific error types
+        if (apiError.message?.includes('Failed to fetch') || 
+            apiError.message?.includes('Network')) {
+          throw new Error("Could not connect to server. Please check your connection.");
+        }
+        
+        if (apiError.message?.includes('500')) {
+          throw new Error("Server error. Please try again later.");
+        }
+        
+        if (apiError.message?.includes('400')) {
+          throw new Error("Invalid task data. Please check all fields and try again.");
+        }
+        
+        throw apiError;
       }
       
-      // Send the data to the API
-      const response = await api.tasks.create(taskData)
-      
-      // Extract the created task ID and add it to our form values
+      // Create the new task object for local state/callbacks
       const newTask = {
         ...values,
-        id: response.id || `task-${Date.now()}` // Use the ID from response or generate a fallback
-      }
+        id: response?.id || `task-${Date.now()}`
+      };
       
-      console.log("Created task:", newTask)
+      console.log("Created task:", newTask);
 
       // Call the onTaskCreated callback if provided
       if (onTaskCreated) {
-        onTaskCreated(newTask)
+        onTaskCreated(newTask);
       }
 
+      // Refresh analytics data
+      refreshAnalytics();
+
       // Close the dialog and reset form
-      setOpen(false)
-      form.reset()
-      toast.success("Task created successfully!")
-    } catch (error) {
-      console.error("Error creating task:", error)
-      toast.error("Failed to create task. Please try again.")
+      setOpen(false);
+      form.reset();
+      toast.success("Task created successfully!");
+    } catch (error: any) {
+      console.error("Error creating task:", error);
+      toast.error(error.message || "Failed to create task. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 

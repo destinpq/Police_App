@@ -2,6 +2,9 @@
  * API utilities for making requests to the backend
  */
 
+// Import the API_BASE_URL from api-core.ts to ensure consistency
+import { API_BASE_URL as CORE_API_BASE_URL } from './api-core';
+
 // Get the current environment
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -12,13 +15,8 @@ export const getApiBaseUrl = (): string => {
     return window.ENV_API_URL;
   }
   
-  // Use environment variable if available
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  
-  // Default to localhost for development
-  return 'http://localhost:8888/api';
+  // Use the same URL as defined in api-core.ts
+  return CORE_API_BASE_URL;
 };
 
 // Create and export the API base URL
@@ -43,22 +41,39 @@ export function apiUrl(path: string): string {
 }
 
 /**
- * Fetch data from the API with error handling
+ * Fetch data from the API with retry mechanism
  */
 export async function fetchFromApi<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retries = 3,
+  backoff = 300
 ): Promise<T> {
   const url = apiUrl(path);
   
   try {
+    // First check if navigator is online
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      console.error('Network is offline');
+      throw new Error('Network is offline. Please check your internet connection.');
+    }
+
+    // Set a timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout
+    
     const response = await fetch(url, {
       ...options,
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
+      // Include credentials for CORS requests with cookies
+      credentials: 'include',
     });
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -84,9 +99,37 @@ export async function fetchFromApi<T>(
       return {} as T;
     }
   } catch (error) {
+    // Distinguish between network errors and other errors
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      console.error(`Network error connecting to ${url}. The server might be down or unreachable.`);
+      
+      // Implement retry mechanism for network errors
+      if (retries > 0) {
+        console.log(`Retrying in ${backoff}ms... (${retries} retries left)`);
+        
+        return new Promise(resolve => {
+          setTimeout(() => {
+            resolve(fetchFromApi<T>(path, options, retries - 1, backoff * 2));
+          }, backoff);
+        });
+      }
+      
+      throw new Error(`Failed to connect to the server after multiple attempts. Please check if the server is running.`);
+    }
+    
     console.error(`Error fetching from ${url}:`, error);
     throw error;
   }
+}
+
+/**
+ * Dispatches an event to refresh analytics data
+ */
+export function refreshAnalytics() {
+  // Create and dispatch a custom event that analytics components can listen for
+  const event = new CustomEvent('analytics:refresh');
+  window.dispatchEvent(event);
+  console.log('Dispatched analytics:refresh event');
 }
 
 // Add TypeScript interface augmentation for window

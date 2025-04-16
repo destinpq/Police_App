@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart3, CheckSquare, Home, MessageSquare, Users, ExternalLink, Building2, ShieldCheck } from "lucide-react"
+import { BarChart3, CheckSquare, Home, MessageSquare, Users, ExternalLink } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { LucideIcon } from "lucide-react"
@@ -85,18 +85,6 @@ export function AppSidebar() {
           icon: Users,
           href: "/team",
           isActive: pathname === "/team",
-        },
-        {
-          title: "Departments",
-          icon: Building2,
-          href: "/admin/departments",
-          isActive: pathname.includes('/admin/departments'),
-        },
-        {
-          title: "Roles",
-          icon: ShieldCheck,
-          href: "/admin/roles",
-          isActive: pathname.includes('/admin/roles'),
         },
       ],
     },

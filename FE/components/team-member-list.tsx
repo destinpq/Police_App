@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { CreateTeamMemberDialog } from "@/components/create-team-member-dialog"
+import { EditTeamMemberDialog } from "@/components/edit-team-member-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { 
   AlertDialog,
@@ -22,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Trash2 } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import api from "@/lib/api"
 import { toast } from "sonner"
@@ -36,19 +37,29 @@ interface TeamMember {
   department?: string
   departmentName?: string
   avatar?: string
+  bio?: string
+  phone?: string
+  skills?: string
 }
 
 interface TeamMemberListProps {
   initialMembers?: TeamMember[]
   onMemberAdded?: (member: TeamMember) => void
   onMemberDeleted?: (memberId: string) => void
+  onMemberUpdated?: (member: TeamMember) => void
 }
 
-export function TeamMemberList({ initialMembers = [], onMemberAdded, onMemberDeleted }: TeamMemberListProps) {
+export function TeamMemberList({ 
+  initialMembers = [], 
+  onMemberAdded, 
+  onMemberDeleted,
+  onMemberUpdated
+}: TeamMemberListProps) {
   const [members, setMembers] = useState<TeamMember[]>(initialMembers)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteMemberId, setDeleteMemberId] = useState<string | null>(null)
+  const [editMember, setEditMember] = useState<TeamMember | null>(null)
 
   useEffect(() => {
     if (initialMembers.length > 0) {
@@ -98,6 +109,18 @@ export function TeamMemberList({ initialMembers = [], onMemberAdded, onMemberDel
     } finally {
       setDeleteMemberId(null)
     }
+  }
+
+  const handleMemberUpdated = (updatedMember: TeamMember) => {
+    setMembers(prev => prev.map(member => 
+      member.id === updatedMember.id ? updatedMember : member
+    ))
+    
+    if (onMemberUpdated) {
+      onMemberUpdated(updatedMember)
+    }
+    
+    toast.success("Team member updated successfully")
   }
 
   const getInitials = (name: string) => {
@@ -163,20 +186,38 @@ export function TeamMemberList({ initialMembers = [], onMemberAdded, onMemberDel
                   <TableCell>{member.departmentName || member.department || '-'}</TableCell>
                   <TableCell>{member.email}</TableCell>
                   <TableCell className="text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() => setDeleteMemberId(member.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => setEditMember(member)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() => setDeleteMemberId(member.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {editMember && (
+        <EditTeamMemberDialog
+          member={editMember}
+          open={!!editMember}
+          onOpenChange={() => setEditMember(null)}
+          onMemberUpdated={handleMemberUpdated}
+        />
       )}
 
       <AlertDialog open={!!deleteMemberId} onOpenChange={() => setDeleteMemberId(null)}>

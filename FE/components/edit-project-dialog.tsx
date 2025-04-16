@@ -95,9 +95,7 @@ export function EditProjectDialog({
 }: EditProjectDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [fetchingDepartments, setFetchingDepartments] = useState(false)
-  const { teamMembers } = useTeam()
+  const { teamMembers, departments } = useTeam()
 
   // Parse date strings to Date objects
   const parseDate = (dateString?: string | Date) => {
@@ -133,32 +131,70 @@ export function EditProjectDialog({
     },
   })
 
-  // Fetch departments when dialog opens
-  useEffect(() => {
-    if (open) {
-      fetchDepartments();
-    }
-  }, [open]);
-
-  const fetchDepartments = async () => {
-    setFetchingDepartments(true);
-    try {
-      const departmentsData = await api.departments.getAll();
-      setDepartments(departmentsData);
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-      toast.error("Failed to load departments");
-    } finally {
-      setFetchingDepartments(false);
-    }
-  };
+  // No need to fetch departments as they're already available from TeamContext
 
   async function onSubmit(values: FormValues) {
     try {
       setIsLoading(true)
       
+      // Define a type for the project data
+      interface ProjectData {
+        name: string;
+        description: string;
+        status: string;
+        priority: string;
+        startDate?: string;
+        endDate?: string;
+        managerId?: string;
+        departmentId?: string;
+        budget?: string;
+        tags?: string;
+      }
+      
+      // Create a clean project data object without undefined values
+      let projectData: ProjectData = {
+        name: values.name,
+        description: values.description,
+        status: values.status,
+        priority: values.priority
+      };
+      
+      // Only add non-empty fields
+      if (values.startDate) {
+        const startDate = new Date(values.startDate);
+        projectData.startDate = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+      }
+      
+      if (values.endDate) {
+        const endDate = new Date(values.endDate);
+        projectData.endDate = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+      }
+      
+      // UUID validation regex pattern
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      // Only add manager if it's a valid UUID
+      if (values.manager && values.manager !== 'none' && uuidPattern.test(values.manager)) {
+        projectData.managerId = values.manager;
+      }
+      
+      // Only add department if it's a valid UUID
+      if (values.department && values.department !== 'none' && uuidPattern.test(values.department)) {
+        projectData.departmentId = values.department;
+      }
+      
+      if (values.budget && values.budget.trim() !== '') {
+        projectData.budget = values.budget;
+      }
+      
+      if (values.tags && values.tags.trim() !== '') {
+        projectData.tags = values.tags;
+      }
+      
+      console.log("Sending project update data:", projectData);
+      
       // Send the data to the API
-      await api.projects.update(project.id, values)
+      await api.projects.update(project.id, projectData)
       
       // Call the onProjectUpdated callback if provided
       if (onProjectUpdated) {
@@ -366,21 +402,21 @@ export function EditProjectDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Department</FormLabel>
-                    <Select value={field.value || ""} onValueChange={field.onChange}>
+                    <Select value={field.value || "none"} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={fetchingDepartments ? "Loading departments..." : "Select department"} />
+                          <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {departments.length > 0 ? (
                           departments.map((department) => (
-                            <SelectItem key={department.id} value={department.id || "undefined-dept"}>
+                            <SelectItem key={department.id} value={department.id}>
                               {department.name}
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="no-departments" disabled>No departments found</SelectItem>
+                          <SelectItem value="none" disabled>No departments found</SelectItem>
                         )}
                       </SelectContent>
                     </Select>

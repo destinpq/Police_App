@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarIcon, Pencil } from "lucide-react"
 import { format } from "date-fns"
+import { refreshAnalytics } from "@/lib/api-utils"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -95,6 +96,7 @@ export function EditTaskDialog({
   
   const [projects, setProjects] = useState<Project[]>([])
   const [loadingProjects, setLoadingProjects] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Parse the dueDate string to a Date object if it exists
   const parseDueDate = () => {
@@ -116,8 +118,8 @@ export function EditTaskDialog({
       priority: task.priority,
       status: task.status,
       dueDate: parseDueDate(),
-      assignee: task.assignee,
-      project: task.project,
+      assignee: typeof task.assignee === 'object' && task.assignee ? (task.assignee as any).id : task.assignee,
+      project: typeof task.project === 'object' && task.project ? (task.project as any).id : task.project,
       tags: task.tags 
         ? Array.isArray(task.tags) 
           ? task.tags.join(", ") 
@@ -149,15 +151,54 @@ export function EditTaskDialog({
     }
   };
 
-  function onSubmit(values: FormValues) {
-    // In a real app, you would send this to your API
-    console.log(values)
+  async function onSubmit(values: FormValues) {
+    try {
+      setIsSubmitting(true)
+      
+      // Format the data for the API to ensure proper handling of dates and empty fields
+      const formattedValues = {
+        ...values,
+        // Handle date formatting - convert Date object to ISO string for API
+        dueDate: values.dueDate ? values.dueDate.toISOString() : undefined,
+        // Handle empty strings for optional fields by converting them to undefined
+        project: values.project === "" ? undefined : values.project,
+        assignee: values.assignee === "" ? undefined : values.assignee,
+        tags: values.tags === "" ? undefined : values.tags,
+        estimatedHours: values.estimatedHours === "" ? undefined : values.estimatedHours
+      }
+      
+      console.log("Submitting task update with data:", formattedValues)
+      
+      // We need to remove undefined values since they cause issues with JSON.stringify
+      const cleanedValues = Object.fromEntries(
+        Object.entries(formattedValues).filter(([_, v]) => v !== undefined)
+      );
+      
+      console.log("Cleaned values for submission:", cleanedValues)
+      
+      // Send updated task data to API
+      const response = await api.tasks.update(values.id, cleanedValues)
+      
+      console.log("Task update response:", response)
 
-    if (onTaskUpdated) {
-      onTaskUpdated(values)
+      // Call the onTaskUpdated callback if provided
+      if (onTaskUpdated) {
+        onTaskUpdated(values)
+      }
+      
+      // Refresh analytics data
+      refreshAnalytics()
+
+      setOpen(false)
+      toast.success("Task updated successfully!")
+    } catch (error) {
+      console.error("Error updating task:", error)
+      // Show more detailed error message if available
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+      toast.error(`Failed to update task: ${errorMessage}`)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setOpen(false)
   }
 
   return (
@@ -352,7 +393,7 @@ export function EditTaskDialog({
                   <FormItem>
                     <FormLabel>Estimated Hours</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Hours to complete" {...field} />
+                      <Input type="number" placeholder="Hours to complete" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -367,7 +408,7 @@ export function EditTaskDialog({
                 <FormItem>
                   <FormLabel>Tags</FormLabel>
                   <FormControl>
-                    <Input placeholder="Comma-separated tags (e.g., frontend, bug, feature)" {...field} />
+                    <Input placeholder="Comma-separated tags (e.g., frontend, bug, feature)" {...field} value={field.value || ""} />
                   </FormControl>
                   <FormDescription>Separate tags with commas</FormDescription>
                   <FormMessage />
@@ -376,7 +417,42 @@ export function EditTaskDialog({
             />
 
             <DialogFooter>
-              <Button type="submit">Save Changes</Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="mr-auto" 
+                onClick={async () => {
+                  try {
+                    setIsSubmitting(true);
+                    // Simple fetch check
+                    try {
+                      const response = await fetch('/api/health');
+                      if (response.ok) {
+                        const data = await response.json();
+                        toast.success(`API connection successful: ${data.message || 'Backend is online'}`);
+                        console.log('Health check result:', data);
+                      } else {
+                        toast.error('API connection failed');
+                        console.error('Health check failed:', response.statusText);
+                      }
+                    } catch (err) {
+                      toast.error('Could not connect to API');
+                      console.error('Health check network error:', err);
+                    }
+                  } catch (error) {
+                    toast.error('Could not perform API connectivity check');
+                    console.error('Health check outer error:', error);
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                Test API Connection
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

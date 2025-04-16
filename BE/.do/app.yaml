@@ -3,7 +3,7 @@ env:
   - key: NODE_ENV
     value: "production"
   - key: PORT
-    value: "8080"
+    value: "3001"
 build_command: npm install && npm run build
 run_command: npm run start:prod
-http_port: 8080 
+http_port: 3001 

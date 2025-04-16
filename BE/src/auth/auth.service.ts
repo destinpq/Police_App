@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
@@ -40,6 +40,40 @@ export class AuthService {
     } catch (error) {
       this.logger.error(`Error during login: ${error.message}`, error.stack);
       throw new UnauthorizedException('Login failed');
+    }
+  }
+
+  async register(name: string, email: string, password: string) {
+    try {
+      // Check if user with this email already exists
+      const existingUser = await this.usersService.findByEmail(email);
+      if (existingUser) {
+        throw new ConflictException('User with this email already exists');
+      }
+      
+      // Create new user
+      const user = await this.usersService.create({
+        name,
+        email,
+        password,
+      });
+      
+      // Return token and user info
+      const payload = { email: user.email, sub: user.id };
+      return {
+        access_token: this.jwtService.sign(payload),
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+      };
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      this.logger.error(`Error during registration: ${error.message}`, error.stack);
+      throw new UnauthorizedException('Registration failed');
     }
   }
 

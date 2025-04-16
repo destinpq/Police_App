@@ -13,8 +13,16 @@ export class DepartmentsController {
   }
 
   @Get()
-  findAll() {
-    return this.departmentsService.findAll();
+  async findAll() {
+    console.log("GET /departments - Fetching all departments");
+    try {
+      const departments = await this.departmentsService.findAll();
+      console.log(`Found ${departments.length} departments:`, departments);
+      return departments;
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      throw error;
+    }
   }
 
   @Get(':id')

@@ -1,0 +1,28 @@
+{
+  "name": "task-tracker-online",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "FE",
+    "BE"
+  ],
+  "scripts": {
+    "start:fe": "yarn workspace FE dev",
+    "start:be": "yarn workspace BE start:dev",
+    "build:fe": "yarn workspace FE build",
+    "build:be": "yarn workspace BE build",
+    "lint:fe": "yarn workspace FE lint",
+    "lint:be": "yarn workspace BE lint",
+    "start": "yarn start:be & yarn start:fe",
+    "build": "yarn build:be && yarn build:fe",
+    "clean": "node clean.js",
+    "db:fix": "yarn workspace BE db:fix",
+    "db:migrate:run": "yarn workspace BE migration:run",
+    "db:migrate:revert": "yarn workspace BE migration:revert",
+    "db:migrate:generate": "yarn workspace BE migration:generate"
+  },
+  "packageManager": "yarn@1.22.22",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

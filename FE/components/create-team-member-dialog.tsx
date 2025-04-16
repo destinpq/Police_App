@@ -39,10 +39,10 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  role: z.string().min(1, {
+  roleId: z.string().min(1, {
     message: "Please select a role.",
   }),
-  department: z.string().min(1, {
+  departmentId: z.string().min(1, {
     message: "Please select a department.",
   }),
   bio: z.string().optional(),
@@ -82,18 +82,16 @@ export function CreateTeamMemberDialog({
   const [open, setOpen] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [roles, setRoles] = useState<Role[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const { addTeamMember } = useTeam()
+  const { addTeamMember, departments, roles } = useTeam()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
-      role: "",
-      department: "",
+      roleId: "",
+      departmentId: "",
       bio: "",
       phone: "",
       skills: "",
@@ -101,63 +99,49 @@ export function CreateTeamMemberDialog({
     },
   })
 
-  // Fetch departments and roles when dialog opens
-  useEffect(() => {
-    if (open) {
-      fetchDepartmentsAndRoles();
-    }
-  }, [open]);
-
-  const fetchDepartmentsAndRoles = async () => {
-    setIsLoading(true);
-    try {
-      // Fetch departments
-      const departmentsData = await api.departments.getAll();
-      setDepartments(departmentsData);
-
-      // Fetch roles
-      const rolesData = await api.roles.getAll();
-      setRoles(rolesData);
-    } catch (error) {
-      console.error("Error fetching departments or roles:", error);
-      toast.error("Failed to load departments or roles");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // No need to fetch departments and roles since they are hardcoded in the TeamProvider
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     
     try {
-      // Use the context function to add the team member
+      console.log("Submitting form with values:", values);
+      
+      // Create a clean object with the form values
       const memberData = {
         name: values.name,
         email: values.email,
-        role: values.role || "",
-        department: values.department || "",
-        bio: values.bio,
-        phone: values.phone,
-        skills: values.skills,
-        avatar: values.avatar
+        roleId: values.roleId || null,
+        departmentId: values.departmentId || null,
+        bio: values.bio || null,
+        phone: values.phone || null,
+        skills: values.skills || null,
+        avatar: values.avatar || null
       };
       
-      const newMember = await addTeamMember(memberData)
+      console.log("Adding team member with:", memberData);
       
-      // Call the onMemberCreated callback if provided and if member was created successfully
-      if (newMember && onMemberCreated) {
-        onMemberCreated(newMember)
+      // Use the context function that now works with hardcoded data
+      const newMember = await addTeamMember(memberData);
+      
+      if (newMember) {
+        console.log("Team member created successfully:", newMember);
+        
+        // Notify parent component if callback provided
+        if (onMemberCreated) {
+          onMemberCreated(newMember);
+        }
+        
+        // Reset form and close dialog
+        form.reset();
+        setAvatarPreview(null);
+        setOpen(false);
       }
-
-      // Close the dialog and reset form
-      setOpen(false)
-      form.reset()
-      setAvatarPreview(null)
-    } catch (error) {
-      // Error handling is done in the context
-      console.error('Error in form submission:', error)
+    } catch (error: any) {
+      console.error("Error in onSubmit:", error);
+      toast.error(error.message || "Failed to add team member");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
@@ -257,7 +241,7 @@ export function CreateTeamMemberDialog({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="role"
+                name="roleId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Role</FormLabel>
@@ -286,7 +270,7 @@ export function CreateTeamMemberDialog({
 
               <FormField
                 control={form.control}
-                name="department"
+                name="departmentId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Department</FormLabel>

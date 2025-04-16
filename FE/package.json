@@ -8,10 +8,12 @@
   },
   "scripts": {
     "dev": "next dev -p 7777",
-    "build": "scripts/set-env.sh npm install --legacy-peer-deps && scripts/set-env.sh next build",
+    "dev:safe": "node scripts/start-with-api-check.js",
+    "check-api": "node scripts/check-api.js",
+    "build": "scripts/set-env.sh yarn install --legacy-peer-deps && scripts/set-env.sh next build",
     "start": "next start -p ${PORT:-8080}",
     "lint": "next lint",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "yarn build"
   },
   "dependencies": {
     "@hookform/resolvers": "latest",
@@ -48,10 +50,12 @@
     "cmdk": "1.0.4",
     "date-fns": "latest",
     "embla-carousel-react": "8.5.1",
+    "firebase": "^10.10.0",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-themes": "^0.4.4",
+    "node-fetch": "^3.3.2",
     "react": "^18.2.0",
     "react-day-picker": "8.10.1",
     "react-dom": "^18.2.0",
@@ -72,5 +76,5 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   },
-  "packageManager": "npm"
+  "packageManager": "yarn@1.22.22"
 }

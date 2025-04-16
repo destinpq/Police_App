@@ -1,6 +1,6 @@
 {
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://octopus-app-ct5vs.ondigitalocean.app/api"
+    "NEXT_PUBLIC_API_URL": "http://localhost:3001/api"
   },
   "buildCommand": "npm run build",
   "installCommand": "npm install --legacy-peer-deps",

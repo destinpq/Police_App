@@ -1,7 +1,7 @@
 name: frontend
 env:
   - key: NEXT_PUBLIC_API_URL
-    value: "https://octopus-app-ct5vs.ondigitalocean.app/api"
+    value: "http://localhost:3001/api"
   - key: NODE_ENV
     value: "production"
   - key: PORT

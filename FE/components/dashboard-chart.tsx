@@ -14,7 +14,14 @@ export function DashboardChart() {
       try {
         setLoading(true)
         const monthlyTrends = await api.analytics.getMonthlyTrends()
-        setData(monthlyTrends || [])
+        
+        // Transform data if needed to match chart expectations
+        const formattedData = monthlyTrends.map((item: any) => ({
+          month: item.month,
+          tasks: item.completed // Use completed tasks as the primary metric
+        }))
+        
+        setData(formattedData || [])
       } catch (err: any) {
         console.error("Error fetching dashboard chart data:", err)
         setError(err?.message || "Failed to load chart data")

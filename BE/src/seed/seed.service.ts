@@ -1,273 +1,187 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { Role } from '../roles/entities/role.entity';
+import { Department } from '../departments/entities/department.entity';
 import { User } from '../users/entities/user.entity';
-import { UsersService } from '../users/users.service';
-import { TasksService } from '../tasks/tasks.service';
-import { ProjectsService } from '../projects/projects.service';
-import { Task } from '../tasks/entities/task.entity';
 import { Project } from '../projects/entities/project.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class SeedService {
   private readonly logger = new Logger(SeedService.name);
-
+  
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Task)
-    private readonly taskRepository: Repository<Task>,
-    @InjectRepository(Project)
-    private readonly projectRepository: Repository<Project>,
-    private readonly usersService: UsersService,
-    private readonly tasksService: TasksService,
-    private readonly projectsService: ProjectsService,
-    private readonly dataSource: DataSource,
+    @InjectDataSource() private dataSource: DataSource,
   ) {}
-
+  
   async seed() {
+    this.logger.log('Starting database seeding...');
+    
     try {
-      await this.seedUsers();
-      await this.seedProjects();
-      await this.seedTasks();
-      
-      this.logger.log('Seeding completed successfully');
-      return { message: 'Database seeded successfully' };
-    } catch (error) {
-      this.logger.error(`Seeding failed: ${error.message}`);
-      throw error;
-    }
-  }
-
-  async truncate() {
-    try {
-      // Get all table names from our entities
-      const entities = this.dataSource.entityMetadatas;
-      
-      // For PostgreSQL, we need to disable triggers temporarily
-      await this.dataSource.query('SET session_replication_role = replica;');
-      
-      // Truncate each table
-      for (const entity of entities) {
-        // TRUNCATE is faster than clear() and resets sequences
-        await this.dataSource.query(`TRUNCATE TABLE "${entity.tableName}" CASCADE;`);
-        this.logger.log(`Truncated table: ${entity.tableName}`);
+      // Check if we have any data
+      const userCount = await this.dataSource.getRepository(User).count();
+      if (userCount > 0) {
+        this.logger.log('Database already has data. Skipping seed operation.');
+        return;
       }
       
-      // Re-enable triggers
-      await this.dataSource.query('SET session_replication_role = DEFAULT;');
+      // Create roles
+      this.logger.log('Creating roles...');
+      const adminRole = await this.dataSource.getRepository(Role).save({
+        name: 'Admin',
+        description: 'Administrator with full access',
+        isAdmin: true,
+      });
       
-      this.logger.log('All tables truncated successfully');
-      return { message: 'Database truncated successfully' };
-    } catch (error) {
-      this.logger.error(`Truncation failed: ${error.message}`);
-      throw error;
-    }
-  }
-
-  private async seedUsers() {
-    const usersCount = await this.userRepository.count();
-    
-    if (usersCount === 0) {
-      // Create admin user
-      await this.usersService.create({
+      const managerRole = await this.dataSource.getRepository(Role).save({
+        name: 'Manager',
+        description: 'Project manager with team management access',
+        isAdmin: false,
+      });
+      
+      const memberRole = await this.dataSource.getRepository(Role).save({
+        name: 'Team Member',
+        description: 'Regular team member',
+        isAdmin: false,
+      });
+      
+      // Create departments
+      this.logger.log('Creating departments...');
+      const engineeringDept = await this.dataSource.getRepository(Department).save({
+        name: 'Engineering',
+        description: 'Software development team',
+        manager: 'Engineering Manager',
+      });
+      
+      const marketingDept = await this.dataSource.getRepository(Department).save({
+        name: 'Marketing',
+        description: 'Marketing and promotion team',
+        manager: 'Marketing Director',
+      });
+      
+      const designDept = await this.dataSource.getRepository(Department).save({
+        name: 'Design',
+        description: 'Design and UX team',
+        manager: 'Design Lead',
+      });
+      
+      // Create users
+      this.logger.log('Creating users...');
+      const passwordHash = await bcrypt.hash('password123', 10);
+      
+      const adminUser = await this.dataSource.getRepository(User).save({
         name: 'Admin User',
         email: 'admin@example.com',
-        password: 'Admin123!',
+        passwordHash,
+        role: adminRole,
+        roleId: adminRole.id,
+        department: engineeringDept,
+        departmentId: engineeringDept.id,
+        bio: 'System administrator',
+        phone: '555-1234',
+        skills: 'Administration, Security',
+        avatar: 'https://ui-avatars.com/api/?name=Admin+User',
       });
       
-      // Create normal user
-      await this.usersService.create({
-        name: 'Regular User',
-        email: 'user@example.com',
-        password: 'User123!',
+      const manager1 = await this.dataSource.getRepository(User).save({
+        name: 'Project Manager',
+        email: 'manager@example.com',
+        passwordHash,
+        role: managerRole,
+        roleId: managerRole.id,
+        department: engineeringDept,
+        departmentId: engineeringDept.id,
+        bio: 'Experienced project manager',
+        phone: '555-5678',
+        skills: 'Project Management, Agile, Scrum',
+        avatar: 'https://ui-avatars.com/api/?name=Project+Manager',
       });
       
-      // Create team members
-      const teamMembers = [
-        { name: 'Alice Johnson', email: 'alice@example.com', password: 'Password123!' },
-        { name: 'Bob Smith', email: 'bob@example.com', password: 'Password123!' },
-        { name: 'Charlie Davis', email: 'charlie@example.com', password: 'Password123!' },
-        { name: 'Diana Miller', email: 'diana@example.com', password: 'Password123!' },
-      ];
+      const user1 = await this.dataSource.getRepository(User).save({
+        name: 'Team Member 1',
+        email: 'user1@example.com',
+        passwordHash,
+        role: memberRole,
+        roleId: memberRole.id,
+        department: engineeringDept,
+        departmentId: engineeringDept.id,
+        bio: 'Frontend developer',
+        phone: '555-9012',
+        skills: 'React, TypeScript, CSS',
+        avatar: 'https://ui-avatars.com/api/?name=Team+Member+1',
+      });
       
-      for (const member of teamMembers) {
-        await this.usersService.create(member);
-      }
+      const user2 = await this.dataSource.getRepository(User).save({
+        name: 'Team Member 2',
+        email: 'user2@example.com',
+        passwordHash,
+        role: memberRole,
+        roleId: memberRole.id,
+        department: designDept,
+        departmentId: designDept.id,
+        bio: 'UI/UX designer',
+        phone: '555-3456',
+        skills: 'Figma, Sketch, User Research',
+        avatar: 'https://ui-avatars.com/api/?name=Team+Member+2',
+      });
       
-      this.logger.log('Users seeded successfully');
-    } else {
-      this.logger.log('Users table already has data, skipping seeding');
+      // Create projects
+      this.logger.log('Creating projects...');
+      const project1 = await this.dataSource.getRepository(Project).save({
+        name: 'Website Redesign',
+        description: 'Redesign the company website with a modern look and feel',
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        status: 'active',
+        priority: 'high',
+        manager: manager1,
+        managerId: manager1.id,
+        department: designDept,
+        departmentId: designDept.id,
+        budget: '25000',
+        tags: 'design,frontend,website',
+      });
+      
+      const project2 = await this.dataSource.getRepository(Project).save({
+        name: 'Mobile App Development',
+        description: 'Create a mobile app for our customers',
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
+        status: 'planning',
+        priority: 'medium',
+        manager: manager1,
+        managerId: manager1.id,
+        department: engineeringDept,
+        departmentId: engineeringDept.id,
+        budget: '50000',
+        tags: 'mobile,app,development',
+      });
+      
+      this.logger.log('Seed completed successfully!');
+    } catch (error) {
+      this.logger.error('Error during seeding:', error);
+      throw error;
     }
   }
   
-  private async seedProjects() {
-    const projectsCount = await this.projectRepository.count();
+  // Method to truncate all tables for testing
+  async truncate() {
+    this.logger.warn('Truncating all tables...');
     
-    if (projectsCount === 0) {
-      const projects = [
-        {
-          name: 'Website Redesign',
-          description: 'Complete overhaul of the company website with modern design and improved user experience',
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
-          status: 'active' as 'planning' | 'active' | 'on-hold' | 'completed',
-          priority: 'high' as 'low' | 'medium' | 'high',
-          manager: 'manager1',
-          department: 'design',
-          budget: '50000',
-          tags: 'website,design,frontend',
-        },
-        {
-          name: 'Mobile App Development',
-          description: 'Develop a native mobile application for iOS and Android platforms',
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000), // 120 days from now
-          status: 'planning' as 'planning' | 'active' | 'on-hold' | 'completed',
-          priority: 'high' as 'low' | 'medium' | 'high',
-          manager: 'manager2',
-          department: 'engineering',
-          budget: '75000',
-          tags: 'mobile,app,development',
-        },
-        {
-          name: 'Marketing Campaign',
-          description: 'Launch a comprehensive marketing campaign for the new product line',
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), // 45 days from now
-          status: 'active' as 'planning' | 'active' | 'on-hold' | 'completed',
-          priority: 'medium' as 'low' | 'medium' | 'high',
-          manager: 'manager3',
-          department: 'marketing',
-          budget: '25000',
-          tags: 'marketing,social media,advertising',
-        },
-        {
-          name: 'Product Launch',
-          description: 'Coordinate the launch of our new flagship product',
-          startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
-          status: 'planning' as 'planning' | 'active' | 'on-hold' | 'completed',
-          priority: 'high' as 'low' | 'medium' | 'high',
-          manager: 'manager4',
-          department: 'product',
-          budget: '100000',
-          tags: 'product,launch,event',
-        },
-      ];
+    try {
+      await this.dataSource.query('DELETE FROM tasks');
+      await this.dataSource.query('DELETE FROM projects');
+      await this.dataSource.query('DELETE FROM users');
+      await this.dataSource.query('DELETE FROM departments');
+      await this.dataSource.query('DELETE FROM roles');
+      await this.dataSource.query('DELETE FROM tags');
       
-      for (const project of projects) {
-        await this.projectsService.create(project);
-      }
-      
-      this.logger.log('Projects seeded successfully');
-    } else {
-      this.logger.log('Projects table already has data, skipping seeding');
-    }
-  }
-  
-  private async seedTasks() {
-    const tasksCount = await this.taskRepository.count();
-    
-    if (tasksCount === 0) {
-      const tasks = [
-        {
-          title: 'Research competitors',
-          description: 'Analyze top 5 competitors in the market',
-          status: 'todo' as 'todo' | 'in-progress' | 'done',
-          priority: 'medium' as 'low' | 'medium' | 'high',
-          assignee: 'user1',
-          project: 'project3', // Marketing Campaign
-          tags: 'research,marketing',
-          estimatedHours: '8',
-        },
-        {
-          title: 'Design new landing page',
-          description: 'Create wireframes for the new landing page',
-          status: 'todo' as 'todo' | 'in-progress' | 'done',
-          priority: 'high' as 'low' | 'medium' | 'high',
-          assignee: 'user2',
-          project: 'project1', // Website Redesign
-          tags: 'design,frontend',
-          estimatedHours: '12',
-        },
-        {
-          title: 'Update documentation',
-          description: 'Update API documentation with new endpoints',
-          status: 'in-progress' as 'todo' | 'in-progress' | 'done',
-          priority: 'medium' as 'low' | 'medium' | 'high',
-          assignee: 'user3',
-          project: 'project2', // Mobile App
-          tags: 'documentation,api',
-          estimatedHours: '6',
-        },
-        {
-          title: 'Fix navigation bug',
-          description: 'Fix the navigation bug on mobile devices',
-          status: 'in-progress' as 'todo' | 'in-progress' | 'done',
-          priority: 'high' as 'low' | 'medium' | 'high',
-          assignee: 'user4',
-          project: 'project1', // Website Redesign
-          tags: 'bug,frontend',
-          estimatedHours: '4',
-        },
-        {
-          title: 'Write blog post',
-          description: 'Write a blog post about our new features',
-          status: 'in-progress' as 'todo' | 'in-progress' | 'done',
-          priority: 'low' as 'low' | 'medium' | 'high',
-          assignee: 'user1',
-          project: 'project3', // Marketing Campaign
-          tags: 'content,marketing',
-          estimatedHours: '5',
-        },
-        {
-          title: 'Implement authentication',
-          description: 'Implement OAuth authentication',
-          status: 'done' as 'todo' | 'in-progress' | 'done',
-          priority: 'high' as 'low' | 'medium' | 'high',
-          assignee: 'user2',
-          project: 'project2', // Mobile App
-          tags: 'security,backend',
-          estimatedHours: '10',
-        },
-        {
-          title: 'Create email templates',
-          description: 'Design and code email templates for marketing',
-          status: 'done' as 'todo' | 'in-progress' | 'done',
-          priority: 'medium' as 'low' | 'medium' | 'high',
-          assignee: 'user3',
-          project: 'project3', // Marketing Campaign
-          tags: 'email,design',
-          estimatedHours: '7',
-        },
-        {
-          title: 'Optimize database queries',
-          description: 'Improve performance of slow database queries',
-          status: 'done' as 'todo' | 'in-progress' | 'done',
-          priority: 'high' as 'low' | 'medium' | 'high',
-          assignee: 'user4',
-          project: 'project2', // Mobile App
-          tags: 'performance,database',
-          estimatedHours: '9',
-        },
-      ];
-      
-      for (const task of tasks) {
-        // Set a random due date (between now and 30 days from now)
-        const daysToAdd = Math.floor(Math.random() * 30) + 1;
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + daysToAdd);
-        
-        await this.tasksService.create({
-          ...task,
-          dueDate,
-        });
-      }
-      
-      this.logger.log('Tasks seeded successfully');
-    } else {
-      this.logger.log('Tasks table already has data, skipping seeding');
+      this.logger.log('All tables truncated successfully');
+      return { message: 'All tables truncated successfully' };
+    } catch (error) {
+      this.logger.error('Error truncating tables:', error);
+      throw error;
     }
   }
 } 

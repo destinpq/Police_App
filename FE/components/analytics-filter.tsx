@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import api from "@/lib/api"
+import api, { departmentsApi } from "@/lib/api"
 import { toast } from "sonner"
 
 interface AnalyticsFilterProps {
@@ -36,7 +36,7 @@ export function AnalyticsFilter({ onFilterChange, onViewChange }: AnalyticsFilte
     to: new Date(),
   })
 
-  const [view, setView] = useState<"personal" | "team" | "organization">("personal")
+  const [view, setView] = useState<"personal" | "team" | "organization">("organization")
   const [project, setProject] = useState<string | undefined>(undefined)
   const [department, setDepartment] = useState<string | undefined>(undefined)
   const [member, setMember] = useState<string | undefined>(undefined)
@@ -54,11 +54,21 @@ export function AnalyticsFilter({ onFilterChange, onViewChange }: AnalyticsFilte
   const fetchDepartments = async () => {
     setLoadingDepartments(true);
     try {
-      const departmentsData = await api.departments.getAll();
-      setDepartments(departmentsData);
+      // Get the departments API with fallback
+      const deptAPI = api?.departments || departmentsApi;
+      
+      // Safely get departments data with fallback
+      const getAllDepartments = deptAPI.getAll || (() => Promise.resolve([]));
+      const departmentsData = await getAllDepartments().catch(err => {
+        console.error("Error fetching departments:", err);
+        return [];
+      });
+      
+      setDepartments(departmentsData || []);
     } catch (error) {
       console.error("Error fetching departments:", error);
       toast.error("Failed to load departments");
+      setDepartments([]);
     } finally {
       setLoadingDepartments(false);
     }

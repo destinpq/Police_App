@@ -1,4 +1,14 @@
-import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { User } from '../../users/entities/user.entity'; // Assuming path
+import { Project } from '../../projects/entities/project.entity'; // Assuming path
 
 @Entity('tasks')
 export class Task {
@@ -12,37 +22,45 @@ export class Task {
   description: string;
 
   @Column({
-    type: 'enum',
-    enum: ['low', 'medium', 'high'],
+    type: 'text',
     default: 'medium',
   })
-  priority: string;
+  priority: 'low' | 'medium' | 'high';
 
   @Column({
-    type: 'enum',
-    enum: ['todo', 'in-progress', 'done'],
+    type: 'text',
     default: 'todo',
   })
-  status: string;
+  status: 'todo' | 'in-progress' | 'done';
 
-  @Column({ nullable: true })
-  dueDate: Date;
+  @Column({ nullable: true, type: 'timestamp' })
+  dueDate: Date | null;
 
-  @Column({ nullable: true })
-  assignee: string;
+  // Assignee Relation
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'assignee_id' })
+  assignee: User | null;
 
-  @Column({ nullable: true })
-  project: string;
+  @Column({ type: 'uuid', name: 'assignee_id', nullable: true })
+  assigneeId: string | null;
 
-  @Column({ nullable: true })
-  tags: string;
+  // Project Relation
+  @ManyToOne(() => Project, { nullable: true })
+  @JoinColumn({ name: 'project_id' })
+  project: Project | null;
 
-  @Column({ nullable: true })
-  estimatedHours: string;
+  @Column({ type: 'uuid', name: 'project_id', nullable: true })
+  projectId: string | null;
 
-  @CreateDateColumn()
+  @Column({ type:'text', nullable: true })
+  tags: string | null;
+
+  @Column({ type:'text', nullable: true })
+  estimatedHours: string | null;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 } 

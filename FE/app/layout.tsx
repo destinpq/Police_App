@@ -20,11 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <Script src="/api-config.js" strategy="beforeInteractive" />
-      </head>
       <body className={inter.className}>
         <ClientLayout>{children}</ClientLayout>
+        <Script id="api-config" src="/api-config.js" strategy="afterInteractive" />
       </body>
     </html>
   )

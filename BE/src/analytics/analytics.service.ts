@@ -39,6 +39,14 @@ interface DateRange {
   end: Date;
 }
 
+// Filter parameters interface
+export interface AnalyticsFilter {
+  userId?: string;
+  departmentId?: string;
+  projectId?: string;
+  dateRange?: DateRange;
+}
+
 @Injectable()
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
@@ -53,7 +61,7 @@ export class AnalyticsService {
   ) {}
 
   // Get all metrics in one call to reduce API requests
-  async getDashboardMetrics(userId?: string) {
+  async getDashboardMetrics(filters: AnalyticsFilter) {
     try {
       // Execute all metrics queries in parallel for better performance
       const [
@@ -64,12 +72,12 @@ export class AnalyticsService {
         efficiency,
         overdue
       ] = await Promise.all([
-        this.getTaskCompletionMetrics(userId),
-        this.getTimeMetrics(userId),
-        this.getCategoryDistribution(userId),
-        this.getWeeklyActivity(userId),
-        this.getEfficiencyMetrics(userId),
-        this.getOverdueMetrics(userId)
+        this.getTaskCompletionMetrics(filters),
+        this.getTimeMetrics(filters),
+        this.getCategoryDistribution(filters),
+        this.getWeeklyActivity(filters),
+        this.getEfficiencyMetrics(filters),
+        this.getOverdueMetrics(filters)
       ]);
 
       return {
@@ -87,7 +95,20 @@ export class AnalyticsService {
   }
 
   // Utility function to get date ranges for comparisons
-  private getComparisonDateRanges(): { current: DateRange, previous: DateRange } {
+  private getComparisonDateRanges(customRange?: DateRange): { current: DateRange, previous: DateRange } {
+    if (customRange) {
+      // Calculate a previous period of the same length
+      const diff = customRange.end.getTime() - customRange.start.getTime();
+      const previousStart = new Date(customRange.start.getTime() - diff);
+      const previousEnd = new Date(customRange.start);
+      
+      return {
+        current: customRange,
+        previous: { start: previousStart, end: previousEnd }
+      };
+    }
+    
+    // Default 30-day range
     const now = new Date();
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
     const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, now.getDate());
@@ -98,28 +119,61 @@ export class AnalyticsService {
     };
   }
 
-  // Helper function to create base query with user filter
-  private createBaseQuery(userId?: string) {
+  // Helper function to create base query with filters
+  private createBaseQuery(filters?: AnalyticsFilter) {
     const query = this.taskRepository.createQueryBuilder('task');
-    if (userId) {
-      query.where('task.assignee = :userId', { userId });
+    
+    if (filters?.userId) {
+      query.andWhere('task.assignee = :userId', { userId: filters.userId });
     }
+    
+    if (filters?.departmentId) {
+      // Join with user to filter by department
+      query.innerJoin('users', 'user', 'user.id = task.assignee')
+        .andWhere('user.department = :departmentId', { departmentId: filters.departmentId });
+    }
+    
+    if (filters?.projectId) {
+      query.andWhere('task.project = :projectId', { projectId: filters.projectId });
+    }
+    
+    if (filters?.dateRange) {
+      query.andWhere('task.createdAt BETWEEN :startDate AND :endDate', { 
+        startDate: filters.dateRange.start,
+        endDate: filters.dateRange.end
+      });
+    }
+    
     return query;
   }
 
-  // Helper function to apply common where conditions
-  private applyUserFilter(where: FindOptionsWhere<Task>, userId?: string): FindOptionsWhere<Task> {
-    if (userId) {
-      return { ...where, assignee: userId };
+  // Apply filter conditions to a Where clause
+  private applyFilters(where: FindOptionsWhere<Task>, filters?: AnalyticsFilter): FindOptionsWhere<Task> {
+    const result = { ...where };
+    
+    if (filters?.userId) {
+      result.assigneeId = filters.userId;
     }
-    return where;
+    
+    if (filters?.projectId) {
+      result.projectId = filters.projectId;
+    }
+    
+    if (filters?.dateRange) {
+      result.createdAt = Between(filters.dateRange.start, filters.dateRange.end);
+    }
+    
+    // Department filter requires a join and can't be applied with simple where clause
+    // It's handled in the query builder methods
+    
+    return result;
   }
 
   // Task completion metrics
-  async getTaskCompletionMetrics(userId?: string) {
+  async getTaskCompletionMetrics(filters: AnalyticsFilter) {
     try {
-      const dateRanges = this.getComparisonDateRanges();
-      const baseQuery = this.createBaseQuery(userId);
+      const dateRanges = this.getComparisonDateRanges(filters.dateRange);
+      const baseQuery = this.createBaseQuery(filters);
       
       // Current completed tasks
       const currentCompleted = await baseQuery
@@ -155,16 +209,16 @@ export class AnalyticsService {
   }
 
   // Time metrics - average completion time
-  async getTimeMetrics(userId?: string) {
+  async getTimeMetrics(filters: AnalyticsFilter) {
     try {
-      const dateRanges = this.getComparisonDateRanges();
+      const dateRanges = this.getComparisonDateRanges(filters.dateRange);
 
       // Current period tasks
       const completedTasks = await this.taskRepository.find({
-        where: this.applyUserFilter({
+        where: this.applyFilters({
           status: 'done',
           updatedAt: Between(dateRanges.current.start, dateRanges.current.end),
-        }, userId),
+        }, filters),
       });
 
       // Calculate average completion time in days
@@ -172,10 +226,10 @@ export class AnalyticsService {
       
       // Previous period tasks
       const previousTasks = await this.taskRepository.find({
-        where: this.applyUserFilter({
+        where: this.applyFilters({
           status: 'done',
           updatedAt: Between(dateRanges.previous.start, dateRanges.previous.end),
-        }, userId),
+        }, filters),
       });
 
       const { averageDays: previousAverageDays } = this.calculateAverageCompletionDays(previousTasks);
@@ -213,10 +267,10 @@ export class AnalyticsService {
   }
 
   // Task distribution by category/tags
-  async getCategoryDistribution(userId?: string): Promise<CategoryDistribution[]> {
+  async getCategoryDistribution(filters: AnalyticsFilter): Promise<CategoryDistribution[]> {
     try {
       const tasks = await this.taskRepository.find({
-        where: this.applyUserFilter({}, userId),
+        where: this.applyFilters({}, filters),
       });
 
       // Group by tags
@@ -255,7 +309,7 @@ export class AnalyticsService {
   }
 
   // Weekly activity
-  async getWeeklyActivity(userId?: string): Promise<WeeklyActivity[]> {
+  async getWeeklyActivity(filters: AnalyticsFilter): Promise<WeeklyActivity[]> {
     try {
       const startOfWeek = moment().startOf('week').toDate();
       const results: WeeklyActivity[] = [];
@@ -265,9 +319,9 @@ export class AnalyticsService {
       const weekEnd = moment().endOf('week').toDate();
       
       const weekTasks = await this.taskRepository.find({
-        where: this.applyUserFilter({
+        where: this.applyFilters({
           updatedAt: Between(weekStart, weekEnd),
-        }, userId),
+        }, filters),
       });
       
       // Initialize results array with days of the week
@@ -311,17 +365,17 @@ export class AnalyticsService {
   }
 
   // Efficiency metrics (calculated based on estimated vs actual time)
-  async getEfficiencyMetrics(userId?: string) {
+  async getEfficiencyMetrics(filters: AnalyticsFilter) {
     try {
-      const dateRanges = this.getComparisonDateRanges();
+      const dateRanges = this.getComparisonDateRanges(filters.dateRange);
       
       // Current period data
       const allTasks = await this.taskRepository.count({
-        where: this.applyUserFilter({}, userId),
+        where: this.applyFilters({}, filters),
       });
       
       const completedTasks = await this.taskRepository.count({
-        where: this.applyUserFilter({ status: 'done' }, userId),
+        where: this.applyFilters({ status: 'done' }, filters),
       });
 
       // Calculate efficiency percentage
@@ -329,16 +383,16 @@ export class AnalyticsService {
       
       // Previous period data
       const previousAllTasks = await this.taskRepository.count({
-        where: this.applyUserFilter({
+        where: this.applyFilters({
           createdAt: Between(dateRanges.previous.start, dateRanges.previous.end),
-        }, userId),
+        }, filters),
       });
       
       const previousCompletedTasks = await this.taskRepository.count({
-        where: this.applyUserFilter({
+        where: this.applyFilters({
           status: 'done',
           updatedAt: Between(dateRanges.previous.start, dateRanges.previous.end),
-        }, userId),
+        }, filters),
       });
       
       const previousEfficiency = previousAllTasks > 0 ? (previousCompletedTasks / previousAllTasks) * 100 : 0;
@@ -357,21 +411,21 @@ export class AnalyticsService {
   }
 
   // Overdue metrics
-  async getOverdueMetrics(userId?: string) {
+  async getOverdueMetrics(filters: AnalyticsFilter) {
     try {
       const now = new Date();
-      const dateRanges = this.getComparisonDateRanges();
+      const dateRanges = this.getComparisonDateRanges(filters.dateRange);
       
       // Current period data
       const allTasks = await this.taskRepository.count({
-        where: this.applyUserFilter({}, userId),
+        where: this.applyFilters({}, filters),
       });
       
       const overdueTasks = await this.taskRepository.count({
-        where: this.applyUserFilter({
+        where: this.applyFilters({
           dueDate: Between(new Date(2000, 0, 1), now),
           status: Not('done'),
-        }, userId),
+        }, filters),
       });
       
       // Calculate overdue percentage
@@ -379,17 +433,17 @@ export class AnalyticsService {
       
       // Previous period data
       const previousTasks = await this.taskRepository.count({
-        where: this.applyUserFilter({
+        where: this.applyFilters({
           createdAt: Between(dateRanges.previous.start, dateRanges.previous.end),
-        }, userId),
+        }, filters),
       });
       
       const previousOverdueTasks = await this.taskRepository.count({
-        where: this.applyUserFilter({
+        where: this.applyFilters({
           dueDate: Between(new Date(2000, 0, 1), dateRanges.previous.end),
           status: Not('done'),
           createdAt: Between(dateRanges.previous.start, dateRanges.previous.end),
-        }, userId),
+        }, filters),
       });
       
       const previousOverdueRate = previousTasks > 0 ? (previousOverdueTasks / previousTasks) * 100 : 0;
@@ -408,20 +462,42 @@ export class AnalyticsService {
   }
 
   // Get team members performance - optimized to reduce database calls
-  async getTeamPerformance(): Promise<TeamPerformance[]> {
+  async getTeamPerformance(filters?: Omit<AnalyticsFilter, 'userId'>): Promise<TeamPerformance[]> {
     try {
-      const users = await this.userRepository.find();
+      let userQuery = this.userRepository.createQueryBuilder('user');
+      
+      if (filters?.departmentId) {
+        userQuery = userQuery.where('user.department = :departmentId', { 
+          departmentId: filters.departmentId 
+        });
+      }
+      
+      const users = await userQuery.getMany();
       
       if (users.length === 0) {
         return [];
       }
       
-      // First, get all tasks in one query
-      const allTasks = await this.taskRepository.find({
-        where: {
-          assignee: In(users.map(user => user.id)),
-        },
-      });
+      // Build a query based on filters
+      let taskQuery = this.taskRepository.createQueryBuilder('task')
+        .where('task.assignee IN (:...userIds)', { 
+          userIds: users.map(user => user.id) 
+        });
+        
+      if (filters?.dateRange) {
+        taskQuery = taskQuery.andWhere('task.createdAt BETWEEN :start AND :end', {
+          start: filters.dateRange.start,
+          end: filters.dateRange.end
+        });
+      }
+      
+      if (filters?.projectId) {
+        taskQuery = taskQuery.andWhere('task.project = :projectId', {
+          projectId: filters.projectId
+        });
+      }
+      
+      const allTasks = await taskQuery.getMany();
       
       // Process the tasks by user
       const userTaskMap: Record<string, { total: number, completed: number }> = {};
@@ -433,10 +509,10 @@ export class AnalyticsService {
       
       // Count tasks per user
       allTasks.forEach(task => {
-        if (task.assignee && userTaskMap[task.assignee]) {
-          userTaskMap[task.assignee].total++;
+        if (task.assignee && task.assigneeId && userTaskMap[task.assigneeId]) {
+          userTaskMap[task.assigneeId].total++;
           if (task.status === 'done') {
-            userTaskMap[task.assignee].completed++;
+            userTaskMap[task.assigneeId].completed++;
           }
         }
       });
@@ -465,17 +541,16 @@ export class AnalyticsService {
   }
 
   // Get monthly trends - optimized to reduce database calls
-  async getMonthlyTrends(userId?: string): Promise<MonthlyTrend[]> {
+  async getMonthlyTrends(filters?: AnalyticsFilter): Promise<MonthlyTrend[]> {
     try {
       const now = new Date();
       const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
       
-      // Get all relevant tasks in one query
-      const allTasks = await this.taskRepository.find({
-        where: this.applyUserFilter({
-          createdAt: Between(sixMonthsAgo, now),
-        }, userId),
-      });
+      // Build task query with filters
+      let taskQuery = this.createBaseQuery(filters)
+        .andWhere('task.createdAt >= :sixMonthsAgo', { sixMonthsAgo });
+        
+      const allTasks = await taskQuery.getMany();
       
       const results: MonthlyTrend[] = [];
       
