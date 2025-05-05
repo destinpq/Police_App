@@ -1,7 +1,7 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { User } from '../user/entities/user.entity';
-import { Project } from '../project/entities/project.entity';
+import { Project, ProjectStatus } from '../project/entities/project.entity';
 
 @Controller('notification')
 export class NotificationController {
@@ -21,6 +21,10 @@ export class NotificationController {
       id: 1,
       name: 'Test Project',
       description: 'A test project for notifications',
+      status: ProjectStatus.NOT_STARTED,
+      startDate: null as unknown as Date,
+      endDate: null as unknown as Date,
+      completionPercentage: 0,
       tasks: [],
       createdAt: new Date(),
       updatedAt: new Date()

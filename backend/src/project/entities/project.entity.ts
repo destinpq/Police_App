@@ -36,6 +36,15 @@ export class Project {
   @Column({ nullable: true })
   completionPercentage: number;
 
+  @Column({ nullable: true, type: 'float' })
+  budget: number;
+
+  @Column({ nullable: true, type: 'float' })
+  budgetSpent: number;
+
+  @Column({ nullable: true })
+  budgetCurrency: string;
+
   @OneToMany(() => Task, task => task.project)
   tasks: Task[];
 

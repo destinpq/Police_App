@@ -7,4 +7,7 @@ export class CreateProjectDto {
   startDate?: Date;
   endDate?: Date;
   completionPercentage?: number;
+  budget?: number;
+  budgetSpent?: number;
+  budgetCurrency?: string;
 } 
