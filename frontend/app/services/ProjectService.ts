@@ -38,10 +38,21 @@ export const ProjectService = {
 
   async updateProject(id: number, project: UpdateProjectDto): Promise<Project> {
     const options = getAuthHeaders();
+    
+    // Clean up the project data to ensure proper timeline handling
+    const projectData = { ...project };
+    
+    // If we're specifically removing a timeline, make sure the backend knows
+    if (projectData.startDate === undefined && projectData.endDate === undefined) {
+      // Set to null to clear values in the backend
+      projectData.startDate = null;
+      projectData.endDate = null;
+    }
+    
     const response = await fetch(`${API_URL}/${id}`, {
       ...options,
       method: 'PUT',
-      body: JSON.stringify(project),
+      body: JSON.stringify(projectData),
     });
     if (!response.ok) {
       throw new Error(`Failed to update project with id ${id}`);

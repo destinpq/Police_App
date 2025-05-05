@@ -242,17 +242,18 @@ const AnalyticsPage = () => {
   
   // Initialize random metrics after component mounts
   useEffect(() => {
+    // Only initialize metrics if projectStats exists AND we haven't initialized metrics yet
     if (projectStats.length > 0 && Object.keys(projectMetrics).length === 0) {
-      // Initialize empty objects without any fake data
+      // Create empty objects for metrics without triggering re-renders
       const metrics: ProjectMetrics = {};
       const timeline: TimelineData = {};
       
-      // Set up empty data structures
+      // Initialize with empty data once
       setProjectMetrics(metrics);
       setTimelineData(timeline);
       setMonthlyData({ data: [] });
     }
-  }, [projectStats, projectMetrics]);
+  }, [projectStats]);
 
   const getChartData = (stats: UserStats | ProjectStats) => {
     return [

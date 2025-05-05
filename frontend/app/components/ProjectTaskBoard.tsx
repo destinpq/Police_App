@@ -1,13 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Button, Drawer, message } from 'antd';
+import { Row, Col, Button, Drawer, message, Empty, Space } from 'antd';
 import { TaskService } from '../services/TaskService';
 import { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
+import { Project } from '../types/project';
 import { TaskBoard } from './TaskBoard';
 import { TaskForm } from './TaskForm';
 import ProjectList from './ProjectList';
 import ProjectForm from './ProjectForm';
+import ProjectTimeline from './ProjectTimeline';
+import ProjectTimelineManager from './ProjectTimelineManager';
+import ProjectBudgetManager from './ProjectBudgetManager';
+import { ProjectService } from '../services/ProjectService';
 
 interface ProjectTaskBoardProps {
   currentUser: {
@@ -24,6 +29,8 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
   const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(undefined);
   const [projectListUpdated, setProjectListUpdated] = useState<boolean>(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [loadingProject, setLoadingProject] = useState<boolean>(false);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -45,9 +52,32 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
     }
   }, [selectedProjectId]);
 
+  const fetchSelectedProject = useCallback(async () => {
+    if (!selectedProjectId) {
+      setSelectedProject(null);
+      return;
+    }
+
+    try {
+      setLoadingProject(true);
+      const project = await ProjectService.getProjectById(selectedProjectId);
+      setSelectedProject(project);
+    } catch (error) {
+      console.error('Failed to fetch project details:', error);
+      message.error('Failed to load project details');
+    } finally {
+      setLoadingProject(false);
+    }
+  }, [selectedProjectId]);
+
   useEffect(() => {
     fetchTasks();
-  }, [fetchTasks, projectListUpdated]);
+    if (selectedProjectId) {
+      fetchSelectedProject();
+    } else {
+      setSelectedProject(null);
+    }
+  }, [fetchTasks, fetchSelectedProject, selectedProjectId, projectListUpdated]);
 
   const handleProjectSelect = (projectId: number) => {
     setSelectedProjectId(projectId === 0 ? undefined : projectId);
@@ -133,7 +163,7 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
             <h2>
               {selectedProjectId 
-                ? `Tasks for ${tasks.length > 0 ? tasks[0].project.name : 'Project'}`
+                ? `Tasks for ${tasks.length > 0 && tasks[0].project ? tasks[0].project.name : (selectedProject ? selectedProject.name : 'Project')}`
                 : 'All Tasks'
               }
             </h2>
@@ -144,6 +174,35 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
             )}
           </div>
           
+          {selectedProject && (
+            <div style={{ marginBottom: '20px' }}>
+              <ProjectTimeline project={selectedProject} />
+              
+              {currentUser.isAdmin && (
+                <div style={{ marginTop: '20px' }}>
+                  <ProjectTimelineManager 
+                    project={selectedProject} 
+                    onProjectUpdated={handleProjectUpdated} 
+                  />
+                  
+                  <div style={{ marginTop: '20px' }}>
+                    <ProjectBudgetManager 
+                      project={selectedProject} 
+                      onProjectUpdated={handleProjectUpdated} 
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {!selectedProjectId && !loading && tasks.length === 0 && (
+            <Empty 
+              description="No tasks available. Select a project or create a new task."
+              style={{ margin: '40px 0' }}
+            />
+          )}
+
           <TaskBoard 
             tasks={tasks}
             loading={loading}

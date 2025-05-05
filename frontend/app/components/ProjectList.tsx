@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Project } from '../types/project';
+import { Project, ProjectStatus } from '../types/project';
 import { ProjectService } from '../services/ProjectService';
-import { Modal, Button, Popconfirm, message } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Modal, Button, Popconfirm, message, List, Card, Tag, Progress, Space, Typography } from 'antd';
+import { EditOutlined, DeleteOutlined, CalendarOutlined } from '@ant-design/icons';
 import ProjectEditForm from './ProjectEditForm';
+
+const { Text } = Typography;
+
+// Create a type for the list data that allows the special "All Projects" entry 
+type ProjectListItem = Project | { id: number; name: string };
 
 interface ProjectListProps {
   onSelectProject: (projectId: number) => void;
@@ -68,38 +73,86 @@ const ProjectList: React.FC<ProjectListProps> = ({
     setEditModalVisible(false);
   };
 
+  // Function to get tag color based on project status
+  const getStatusTagColor = (status?: ProjectStatus) => {
+    if (!status) return 'default';
+    
+    switch (status) {
+      case ProjectStatus.NOT_STARTED:
+        return 'default';
+      case ProjectStatus.IN_PROGRESS:
+        return 'processing';
+      case ProjectStatus.ON_HOLD:
+        return 'warning';
+      case ProjectStatus.COMPLETED:
+        return 'success';
+      case ProjectStatus.DELAYED:
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  // Format status text to be more readable
+  const formatStatus = (status?: ProjectStatus) => {
+    if (!status) return 'Unknown';
+    
+    return status.replace(/_/g, ' ').toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Function to check if an item is a full Project (type guard)
+  const isProject = (item: ProjectListItem): item is Project => {
+    return (item as Project).status !== undefined;
+  };
+
+  // Format date to readable format
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Not set';
+    return new Date(dateString).toLocaleDateString();
+  };
+
   if (loading) return <div>Loading projects...</div>;
   if (error) return <div className="error">{error}</div>;
 
+  // Create data source with special All Projects item
+  const dataSource: ProjectListItem[] = [
+    { id: 0, name: 'All Projects' },
+    ...projects
+  ];
+
   return (
-    <div className="project-list">
-      <h2>Projects</h2>
-      <ul>
-        <li 
-          className={!selectedProjectId ? 'active' : ''}
-          onClick={() => onSelectProject(0)}
-        >
-          All Projects
-        </li>
-        {projects.map((project) => (
-          <li 
-            key={project.id} 
-            className={selectedProjectId === project.id ? 'active' : ''}
-          >
-            <div className="project-item" onClick={() => onSelectProject(project.id)}>
-              <span className="project-name">{project.name}</span>
-              {isAdmin && (
-                <div className="project-actions">
+    <Card title="Projects" className="project-list">
+      <List
+        itemLayout="vertical"
+        dataSource={dataSource}
+        renderItem={(item) => (
+          <List.Item
+            key={item.id}
+            onClick={() => onSelectProject(item.id)}
+            className={selectedProjectId === item.id ? 'ant-list-item-active' : ''}
+            style={{ cursor: 'pointer' }}
+            actions={item.id !== 0 && isProject(item) ? [
+              <Space key="dates">
+                <CalendarOutlined />
+                <Text>{item.startDate && item.endDate ? 
+                  `${formatDate(item.startDate)} - ${formatDate(item.endDate)}` : 
+                  'No dates set'}
+                </Text>
+              </Space>,
+              isAdmin && (
+                <Space key="actions">
                   <Button 
                     type="text" 
                     icon={<EditOutlined />} 
-                    size="small"
-                    onClick={(e) => handleEdit(project, e)}
+                    onClick={(e) => handleEdit(item, e as React.MouseEvent)}
                   />
                   <Popconfirm
                     title="Delete Project"
                     description="Are you sure you want to delete this project?"
-                    onConfirm={(e) => handleDelete(project.id, e as React.MouseEvent)}
+                    onConfirm={(e) => handleDelete(item.id, e as React.MouseEvent)}
                     okText="Yes"
                     cancelText="No"
                   >
@@ -107,16 +160,38 @@ const ProjectList: React.FC<ProjectListProps> = ({
                       type="text" 
                       danger 
                       icon={<DeleteOutlined />} 
-                      size="small"
                       onClick={(e) => e.stopPropagation()}
                     />
                   </Popconfirm>
-                </div>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+                </Space>
+              )
+            ] : []}
+          >
+            <List.Item.Meta
+              title={item.name}
+              description={item.id !== 0 && isProject(item) && item.description}
+            />
+            {item.id !== 0 && isProject(item) && (
+              <div>
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Space>
+                    <Tag color={getStatusTagColor(item.status)}>
+                      {formatStatus(item.status)}
+                    </Tag>
+                    {item.completionPercentage !== undefined && (
+                      <Progress 
+                        percent={item.completionPercentage} 
+                        size="small" 
+                        status={item.status === ProjectStatus.DELAYED ? 'exception' : 'active'}
+                      />
+                    )}
+                  </Space>
+                </Space>
+              </div>
+            )}
+          </List.Item>
+        )}
+      />
 
       <Modal
         title="Edit Project"
@@ -134,57 +209,21 @@ const ProjectList: React.FC<ProjectListProps> = ({
       </Modal>
 
       <style jsx>{`
-        .project-list {
-          padding: 10px;
-          background-color: #f5f5f5;
-          border-radius: 5px;
+        :global(.ant-list-item-active) {
+          background-color: #e6f7ff;
+        }
+        :global(.project-list) {
           margin-bottom: 20px;
-        }
-        h2 {
-          font-size: 18px;
-          margin-bottom: 10px;
-        }
-        ul {
-          list-style-type: none;
-          padding: 0;
-        }
-        li {
-          padding: 8px 12px;
-          cursor: pointer;
-          margin-bottom: 5px;
-          border-radius: 4px;
-          transition: background-color 0.2s;
-        }
-        li:hover {
-          background-color: #e9e9e9;
-        }
-        li.active {
-          background-color: #1890ff;
-          color: white;
         }
         .error {
           color: red;
           padding: 10px;
-        }
-        .project-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .project-name {
-          flex: 1;
-        }
-        .project-actions {
-          opacity: 0.7;
-        }
-        .project-actions:hover {
-          opacity: 1;
-        }
-        li.active .project-actions {
-          opacity: 1;
+          margin-bottom: 10px;
+          background-color: rgba(255, 0, 0, 0.1);
+          border-radius: 4px;
         }
       `}</style>
-    </div>
+    </Card>
   );
 };
 
