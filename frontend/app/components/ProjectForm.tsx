@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { CreateProjectDto, ProjectStatus } from '../types/project';
+import { CreateProjectDto } from '../types/project';
 import { ProjectService } from '../services/ProjectService';
-import { Form, Input, Button, Select, DatePicker, Slider, Card, message, InputNumber, Divider } from 'antd';
+import { Form, Input, Button, Select, Card, message, InputNumber, Divider } from 'antd';
 import { PlusOutlined, DollarOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 const { Option } = Select;
-const { RangePicker } = DatePicker;
 
 const CURRENCIES = [
   { value: 'USD', label: 'USD ($)', symbol: '$' },
@@ -25,21 +24,18 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ onProjectAdded, currentUser }
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: {
+    name: string;
+    description: string;
+    budgetCurrency?: string;
+    budget?: number;
+    budgetSpent?: number;
+  }) => {
     try {
       setLoading(true);
       
-      // Extract and format timeline data
-      const { dateRange, ...projectData } = values;
-      
-      // Create the project DTO with timeline information
-      const projectDto: CreateProjectDto = {
-        ...projectData,
-        // If dateRange is provided, extract start and end dates
-        startDate: dateRange?.[0] ? dateRange[0].toISOString() : undefined,
-        endDate: dateRange?.[1] ? dateRange[1].toISOString() : undefined,
-        // Default value already set in form initialValues
-      };
+      // Create the project DTO
+      const projectDto: CreateProjectDto = values;
       
       const createdProject = await ProjectService.createProject(projectDto);
       message.success(`Project "${createdProject.name}" created successfully!`);
@@ -67,8 +63,6 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ onProjectAdded, currentUser }
         layout="vertical"
         onFinish={handleSubmit}
         initialValues={{
-          status: ProjectStatus.NOT_STARTED,
-          completionPercentage: 0,
           budgetCurrency: 'USD',
           budgetSpent: 0
         }}
@@ -89,48 +83,6 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ onProjectAdded, currentUser }
           <TextArea 
             placeholder="Enter project description" 
             rows={4} 
-          />
-        </Form.Item>
-        
-        <Divider>Timeline Information</Divider>
-        
-        <Form.Item
-          name="status"
-          label="Project Status"
-        >
-          <Select>
-            <Option value={ProjectStatus.NOT_STARTED}>Not Started</Option>
-            <Option value={ProjectStatus.IN_PROGRESS}>In Progress</Option>
-            <Option value={ProjectStatus.ON_HOLD}>On Hold</Option>
-            <Option value={ProjectStatus.COMPLETED}>Completed</Option>
-            <Option value={ProjectStatus.DELAYED}>Delayed</Option>
-          </Select>
-        </Form.Item>
-        
-        <Form.Item
-          name="dateRange"
-          label="Project Timeline"
-        >
-          <RangePicker 
-            style={{ width: '100%' }} 
-            placeholder={['Start Date', 'End Date']}
-          />
-        </Form.Item>
-        
-        <Form.Item
-          name="completionPercentage"
-          label="Completion Percentage"
-        >
-          <Slider 
-            min={0} 
-            max={100} 
-            marks={{ 
-              0: '0%', 
-              25: '25%', 
-              50: '50%', 
-              75: '75%', 
-              100: '100%' 
-            }} 
           />
         </Form.Item>
         

@@ -1,8 +1,9 @@
 import { Project, CreateProjectDto, UpdateProjectDto } from '../types/project';
 import { Task } from '../types/task';
 import { getAuthHeaders } from './AuthService';
+import { API_BASE_URL } from '../config';
 
-const API_URL = 'http://localhost:3001/projects';
+const API_URL = `${API_BASE_URL}/projects`;
 
 export const ProjectService = {
   async getAllProjects(): Promise<Project[]> {
@@ -39,20 +40,10 @@ export const ProjectService = {
   async updateProject(id: number, project: UpdateProjectDto): Promise<Project> {
     const options = getAuthHeaders();
     
-    // Clean up the project data to ensure proper timeline handling
-    const projectData = { ...project };
-    
-    // If we're specifically removing a timeline, make sure the backend knows
-    if (projectData.startDate === undefined && projectData.endDate === undefined) {
-      // Set to null to clear values in the backend
-      projectData.startDate = null;
-      projectData.endDate = null;
-    }
-    
     const response = await fetch(`${API_URL}/${id}`, {
       ...options,
       method: 'PUT',
-      body: JSON.stringify(projectData),
+      body: JSON.stringify(project),
     });
     if (!response.ok) {
       throw new Error(`Failed to update project with id ${id}`);
@@ -72,11 +63,18 @@ export const ProjectService = {
   },
 
   async getTasksByProject(projectId: number): Promise<Task[]> {
-    const options = getAuthHeaders();
-    const response = await fetch(`http://localhost:3001/tasks/project/${projectId}`, options);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch tasks for project with id ${projectId}`);
+    try {
+      const options = getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/tasks/project/${projectId}`, options)
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch tasks by project');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching tasks by project:', error);
+      return [];
     }
-    return response.json();
   },
 }; 

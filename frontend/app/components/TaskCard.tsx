@@ -1,11 +1,10 @@
 'use client';
 
 import { FC } from 'react';
-import { Typography, Tooltip } from 'antd';
-import { EditOutlined, DeleteOutlined, UserOutlined, ProjectOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
+import { EditOutlined, DeleteOutlined, UserOutlined, ProjectOutlined, CalendarOutlined, DollarOutlined } from '@ant-design/icons';
 import { Task } from '../types/task';
-
-const { Paragraph } = Typography;
+import { FixedParagraph } from './fixed-typography';
 
 interface TaskCardProps {
   task: Task;
@@ -49,6 +48,11 @@ const isOverdue = (deadline?: string, status?: string) => {
   return deadlineDate < today;
 };
 
+const formatMoney = (amount?: number) => {
+  if (amount === undefined || amount === null) return '$0.00';
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+};
+
 export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, onDelete, isAdmin }) => {
   const overdue = isOverdue(task.deadline, task.status);
   
@@ -72,9 +76,9 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, onDelete, isAdmin })
       </div>
       
       <div className="card-body">
-        <Paragraph ellipsis={{ rows: 2 }} className="task-description">
+        <FixedParagraph ellipsis={{ rows: 2 }} className="task-description">
           {task.description}
-        </Paragraph>
+        </FixedParagraph>
         
         <div className="task-meta">
           <div className="task-meta-item">
@@ -90,6 +94,11 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, onDelete, isAdmin })
               </span>
             </div>
           )}
+          
+          <div className="task-meta-item">
+            <DollarOutlined />
+            <span>Money Spent: {formatMoney(task.moneySpent)}</span>
+          </div>
         </div>
         
         {task.assignee && (

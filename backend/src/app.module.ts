@@ -25,23 +25,48 @@ import { ProjectStats } from './analytics/entities/project-stats.entity';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: configService.get('DB_PORT'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_DATABASE'),
-        entities: [
-          User,
-          Task,
-          Project,
-          AccuracyRating,
-          UserStats,
-          ProjectStats,
-        ],
-        synchronize: true,
-      }),
+      useFactory: (configService: ConfigService) => {
+        const databaseUrl = process.env.DATABASE_URL;
+
+        if (databaseUrl) {
+          // Use Heroku's DATABASE_URL if available
+          return {
+            type: 'postgres',
+            url: databaseUrl,
+            ssl: {
+              rejectUnauthorized: false, // Required for Heroku PostgreSQL
+            },
+            entities: [
+              User,
+              Task,
+              Project,
+              AccuracyRating,
+              UserStats,
+              ProjectStats,
+            ],
+            synchronize: true,
+          };
+        } else {
+          // Use local configuration
+          return {
+            type: 'postgres',
+            host: configService.get('DB_HOST'),
+            port: configService.get('DB_PORT'),
+            username: configService.get('DB_USERNAME'),
+            password: configService.get('DB_PASSWORD'),
+            database: configService.get('DB_DATABASE'),
+            entities: [
+              User,
+              Task,
+              Project,
+              AccuracyRating,
+              UserStats,
+              ProjectStats,
+            ],
+            synchronize: true,
+          };
+        }
+      },
     }),
     TasksModule,
     LoginModule,

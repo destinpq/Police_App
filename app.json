@@ -1,0 +1,31 @@
+{
+  "name": "DestinPQ Task Tracker",
+  "description": "A task tracking application for project management",
+  "repository": "https://github.com/yourusername/TaskTracker",
+  "logo": "https://example.com/logo.png",
+  "keywords": ["node", "typescript", "nestjs", "nextjs", "task", "management"],
+  "env": {
+    "JWT_SECRET": {
+      "description": "A secret key for JWT token generation",
+      "generator": "secret"
+    },
+    "NODE_ENV": {
+      "description": "Environment for Node.js application",
+      "value": "production"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "success_url": "/",
+  "scripts": {
+    "postdeploy": "cd backend && npm run db:reset"
+  }
+} 

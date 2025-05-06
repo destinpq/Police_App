@@ -1,0 +1,30 @@
+{
+  "name": "destinpq-task-tracker",
+  "version": "1.0.0",
+  "description": "Task Tracker Application",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "postinstall": "npm run install-backend && npm run install-frontend",
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "cd frontend && npm install",
+    "build": "npm run build-backend && npm run build-frontend",
+    "build-backend": "cd backend && npm run build",
+    "build-frontend": "cd frontend && npm run build",
+    "start": "cd backend && npm run start:prod",
+    "heroku-postbuild": "npm run build"
+  },
+  "cacheDirectories": [
+    "backend/node_modules",
+    "frontend/node_modules"
+  ],
+  "keywords": [
+    "task",
+    "tracker",
+    "nestjs",
+    "nextjs"
+  ],
+  "author": "DestinPQ",
+  "license": "UNLICENSED"
+} 

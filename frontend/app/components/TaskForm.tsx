@@ -1,7 +1,7 @@
 'use client';
 
 import { FC, useEffect, useState } from 'react';
-import { Form, Input, Button, Select, DatePicker, Spin, notification } from 'antd';
+import { Form, Input, Button, Select, DatePicker, Spin, notification, InputNumber } from 'antd';
 import { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
 import { User } from '../types/user';
 import { Project } from '../types/project';
@@ -29,6 +29,7 @@ interface TaskFormValues {
   assignee_id?: number;
   project_id: number;
   deadline?: dayjs.Dayjs | null;
+  moneySpent?: number;
 }
 
 export const TaskForm: FC<TaskFormProps> = ({ task, onSubmit, onCancel, isAdmin }) => {
@@ -207,6 +208,20 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onSubmit, onCancel, isAdmin 
             format="YYYY-MM-DD"
             placeholder="Select deadline"
             showTime={false}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="moneySpent"
+          label="Money Spent ($)"
+        >
+          <InputNumber
+            style={{ width: '100%' }}
+            min={0}
+            step={10}
+            precision={2}
+            placeholder="Enter amount spent on this task"
+            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
           />
         </Form.Item>
 

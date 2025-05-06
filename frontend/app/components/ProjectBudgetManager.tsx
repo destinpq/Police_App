@@ -187,10 +187,7 @@ const ProjectBudgetManager: React.FC<ProjectBudgetManagerProps> = ({
               min={0}
               step={1000}
               formatter={value => `${getCurrencySymbol(form.getFieldValue('budgetCurrency'))} ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => {
-                if (typeof value !== 'string') return 0;
-                return Number(value.replace(/\$\s?|(,*)/g, ''));
-              }}
+              parser={undefined}
             />
           </Form.Item>
           
@@ -204,10 +201,7 @@ const ProjectBudgetManager: React.FC<ProjectBudgetManagerProps> = ({
               min={0}
               step={500}
               formatter={value => `${getCurrencySymbol(form.getFieldValue('budgetCurrency'))} ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => {
-                if (typeof value !== 'string') return 0;
-                return Number(value.replace(/\$\s?|(,*)/g, ''));
-              }}
+              parser={undefined}
             />
           </Form.Item>
           

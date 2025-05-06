@@ -1,7 +1,8 @@
 import { User } from '../types/user';
 import { getAuthHeaders } from './AuthService';
+import { API_BASE_URL } from '../config';
 
-const API_URL = 'http://localhost:3001/users';
+const API_URL = `${API_BASE_URL}/users`;
 
 export const UserService = {
   async getAllUsers(): Promise<User[]> {

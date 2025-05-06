@@ -40,6 +40,7 @@ export class TaskSeed {
             assignee: admin,
             project: projects[0],
             deadline: new Date('2025-06-01'),
+            moneySpent: 0,
           },
           {
             title: 'Design UI mockups',
@@ -48,6 +49,7 @@ export class TaskSeed {
             assignee: users[0],
             project: projects[0],
             deadline: new Date('2025-05-15'),
+            moneySpent: 0,
           },
           {
             title: 'Develop backend API',
@@ -56,6 +58,7 @@ export class TaskSeed {
             assignee: users[1],
             project: projects[1],
             deadline: new Date('2025-05-20'),
+            moneySpent: 0,
           },
           {
             title: 'Write test cases',
@@ -64,6 +67,7 @@ export class TaskSeed {
             assignee: users[2],
             project: projects[1],
             deadline: null,
+            moneySpent: 0,
           },
           {
             title: 'Plan marketing strategy',
@@ -72,6 +76,16 @@ export class TaskSeed {
             assignee: users[3],
             project: projects[2],
             deadline: new Date('2025-04-30'),
+            moneySpent: 0,
+          },
+          {
+            title: 'Implement Task Creation API',
+            description: 'Create the backend API for task creation functionality',
+            status: 'DONE' as 'OPEN' | 'IN_PROGRESS' | 'DONE',
+            assignee: users[2],
+            project: projects[3] || projects[0],
+            deadline: new Date('2025-05-10'),
+            moneySpent: 250.00,
           },
         ];
         

@@ -1,7 +1,8 @@
 import { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
 import { getAuthHeaders } from './AuthService';
+import { API_BASE_URL } from '../config';
 
-const API_URL = 'http://localhost:3001/tasks';
+const API_URL = `${API_BASE_URL}/tasks`;
 
 export const TaskService = {
   async getAllTasks(): Promise<Task[]> {

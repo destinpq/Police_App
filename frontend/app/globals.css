@@ -597,3 +597,38 @@ a:hover {
 .login-button:active {
   transform: scale(0.98) !important;
 }
+
+/* Add to the top of the file */
+.ant-input,
+.ant-input-password input {
+  color: black !important;
+}
+
+.ant-form-item-explain-error {
+  color: #ff4d4f !important;
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* Ensure the login card has a proper background and text color */
+.login-card {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.login-card .ant-card-body {
+  color: black;
+}
+
+/* Make login button visible */
+.login-button {
+  background-color: #1677ff !important;
+  color: white !important;
+  border-color: #1677ff !important;
+}
+
+/* Ensure form labels are visible */
+.ant-form-item-label > label {
+  color: black !important;
+}

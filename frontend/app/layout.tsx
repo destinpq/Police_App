@@ -1,7 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App } from 'antd';
 
 export const metadata: Metadata = {
   title: 'DestinPQ Task Tracker',
@@ -47,7 +47,7 @@ export default function RootLayout({
               },
             }}
           >
-            {children}
+            <App>{children}</App>
           </ConfigProvider>
         </AntdRegistry>
       </body>

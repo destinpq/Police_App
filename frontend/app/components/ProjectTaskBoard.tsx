@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Button, Drawer, message, Empty, Space } from 'antd';
+import { Row, Col, Button, Drawer, message, Empty } from 'antd';
 import { TaskService } from '../services/TaskService';
 import { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
 import { Project } from '../types/project';
@@ -9,8 +9,6 @@ import { TaskBoard } from './TaskBoard';
 import { TaskForm } from './TaskForm';
 import ProjectList from './ProjectList';
 import ProjectForm from './ProjectForm';
-import ProjectTimeline from './ProjectTimeline';
-import ProjectTimelineManager from './ProjectTimelineManager';
 import ProjectBudgetManager from './ProjectBudgetManager';
 import { ProjectService } from '../services/ProjectService';
 
@@ -30,7 +28,6 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
   const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(undefined);
   const [projectListUpdated, setProjectListUpdated] = useState<boolean>(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [loadingProject, setLoadingProject] = useState<boolean>(false);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -59,14 +56,11 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
     }
 
     try {
-      setLoadingProject(true);
       const project = await ProjectService.getProjectById(selectedProjectId);
       setSelectedProject(project);
     } catch (error) {
       console.error('Failed to fetch project details:', error);
       message.error('Failed to load project details');
-    } finally {
-      setLoadingProject(false);
     }
   }, [selectedProjectId]);
 
@@ -176,21 +170,12 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
           
           {selectedProject && (
             <div style={{ marginBottom: '20px' }}>
-              <ProjectTimeline project={selectedProject} />
-              
               {currentUser.isAdmin && (
                 <div style={{ marginTop: '20px' }}>
-                  <ProjectTimelineManager 
+                  <ProjectBudgetManager 
                     project={selectedProject} 
                     onProjectUpdated={handleProjectUpdated} 
                   />
-                  
-                  <div style={{ marginTop: '20px' }}>
-                    <ProjectBudgetManager 
-                      project={selectedProject} 
-                      onProjectUpdated={handleProjectUpdated} 
-                    />
-                  </div>
                 </div>
               )}
             </div>

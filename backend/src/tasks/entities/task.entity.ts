@@ -40,6 +40,9 @@ export class Task {
   @Column({ nullable: true, type: 'timestamp' })
   completedAt: Date | null;
 
+  @Column({ nullable: true, type: 'float', default: 0 })
+  moneySpent: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

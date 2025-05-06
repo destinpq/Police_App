@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Project, ProjectStatus } from '../types/project';
+import { Project } from '../types/project';
 import { ProjectService } from '../services/ProjectService';
-import { Modal, Button, Popconfirm, message, List, Card, Tag, Progress, Space, Typography } from 'antd';
-import { EditOutlined, DeleteOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Modal, Button, Popconfirm, message, List, Card, Space, Typography } from 'antd';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import ProjectEditForm from './ProjectEditForm';
 
 const { Text } = Typography;
@@ -73,45 +73,9 @@ const ProjectList: React.FC<ProjectListProps> = ({
     setEditModalVisible(false);
   };
 
-  // Function to get tag color based on project status
-  const getStatusTagColor = (status?: ProjectStatus) => {
-    if (!status) return 'default';
-    
-    switch (status) {
-      case ProjectStatus.NOT_STARTED:
-        return 'default';
-      case ProjectStatus.IN_PROGRESS:
-        return 'processing';
-      case ProjectStatus.ON_HOLD:
-        return 'warning';
-      case ProjectStatus.COMPLETED:
-        return 'success';
-      case ProjectStatus.DELAYED:
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  // Format status text to be more readable
-  const formatStatus = (status?: ProjectStatus) => {
-    if (!status) return 'Unknown';
-    
-    return status.replace(/_/g, ' ').toLowerCase()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
   // Function to check if an item is a full Project (type guard)
   const isProject = (item: ProjectListItem): item is Project => {
-    return (item as Project).status !== undefined;
-  };
-
-  // Format date to readable format
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Not set';
-    return new Date(dateString).toLocaleDateString();
+    return (item as Project).description !== undefined;
   };
 
   if (loading) return <div>Loading projects...</div>;
@@ -135,13 +99,6 @@ const ProjectList: React.FC<ProjectListProps> = ({
             className={selectedProjectId === item.id ? 'ant-list-item-active' : ''}
             style={{ cursor: 'pointer' }}
             actions={item.id !== 0 && isProject(item) ? [
-              <Space key="dates">
-                <CalendarOutlined />
-                <Text>{item.startDate && item.endDate ? 
-                  `${formatDate(item.startDate)} - ${formatDate(item.endDate)}` : 
-                  'No dates set'}
-                </Text>
-              </Space>,
               isAdmin && (
                 <Space key="actions">
                   <Button 
@@ -171,24 +128,6 @@ const ProjectList: React.FC<ProjectListProps> = ({
               title={item.name}
               description={item.id !== 0 && isProject(item) && item.description}
             />
-            {item.id !== 0 && isProject(item) && (
-              <div>
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Space>
-                    <Tag color={getStatusTagColor(item.status)}>
-                      {formatStatus(item.status)}
-                    </Tag>
-                    {item.completionPercentage !== undefined && (
-                      <Progress 
-                        percent={item.completionPercentage} 
-                        size="small" 
-                        status={item.status === ProjectStatus.DELAYED ? 'exception' : 'active'}
-                      />
-                    )}
-                  </Space>
-                </Space>
-              </div>
-            )}
           </List.Item>
         )}
       />

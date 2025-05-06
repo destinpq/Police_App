@@ -1,6 +1,7 @@
 import { LoginRequest, LoginResponse, User } from '../types/user';
+import { API_BASE_URL } from '../config';
 
-const API_URL = 'http://localhost:3001/login';
+const API_URL = `${API_BASE_URL}/login`;
 
 // Helper function to get auth headers with token
 export const getAuthHeaders = () => {

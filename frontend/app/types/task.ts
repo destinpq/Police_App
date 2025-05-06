@@ -12,6 +12,7 @@ export interface Task {
   project_id: number;
   deadline?: string;
   completedAt?: string;
+  moneySpent?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +24,7 @@ export interface CreateTaskDto {
   assignee_id?: number;
   project_id: number;
   deadline?: string;
+  moneySpent?: number;
 }
 
 export interface UpdateTaskDto {
@@ -33,4 +35,5 @@ export interface UpdateTaskDto {
   assignee_id?: number;
   project_id?: number;
   deadline?: string;
+  moneySpent?: number;
 } 

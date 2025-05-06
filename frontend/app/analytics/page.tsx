@@ -21,6 +21,7 @@ import {
   FieldTimeOutlined,
   SafetyOutlined
 } from '@ant-design/icons';
+import { API_BASE_URL } from '../config';
 
 const { Title } = Typography;
 const { Content } = Layout;
@@ -133,7 +134,7 @@ const AnalyticsPage = () => {
         const options = getAuthHeaders();
         
         // Get current user stats
-        const currentUserResponse = await fetch('http://localhost:3001/analytics/current-user', options);
+        const currentUserResponse = await fetch(`${API_BASE_URL}/analytics/current-user`, options);
         
         if (!currentUserResponse.ok) {
           throw new Error('Failed to fetch analytics data');
@@ -146,8 +147,8 @@ const AnalyticsPage = () => {
         if (user.isAdmin) {
           try {
             const [allUsersResponse, projectsResponse] = await Promise.all([
-              fetch('http://localhost:3001/analytics', options),
-              fetch('http://localhost:3001/analytics/projects', options)
+              fetch(`${API_BASE_URL}/analytics`, options),
+              fetch(`${API_BASE_URL}/analytics/projects`, options)
             ]);
             
             if (allUsersResponse.ok) {
@@ -217,7 +218,7 @@ const AnalyticsPage = () => {
     try {
       setLoading(true);
       const options = getAuthHeaders();
-      const response = await fetch(`http://localhost:3001/analytics/user/${userId}`, options);
+      const response = await fetch(`${API_BASE_URL}/analytics/user/${userId}`, options);
       
       if (response.ok) {
         const userData = await response.json();
@@ -253,6 +254,8 @@ const AnalyticsPage = () => {
       setTimelineData(timeline);
       setMonthlyData({ data: [] });
     }
+  // We intentionally omit projectMetrics from the dependency array to avoid infinite loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectStats]);
 
   const getChartData = (stats: UserStats | ProjectStats) => {

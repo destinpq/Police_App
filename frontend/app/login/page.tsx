@@ -30,18 +30,19 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <Card className="login-card">
+      <Card className="login-card" styles={{ body: { backgroundColor: 'white' } }}>
         <div className="login-logo">
           <div style={{ position: 'relative', width: '200px', height: '200px', margin: '0 auto' }}>
             <Image 
               src="/destinpq.png" 
               alt="DestinPQ Logo" 
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               style={{ objectFit: 'contain' }}
               priority
             />
           </div>
-          <Title level={4} style={{ marginTop: 20, color: '#ffffff' }}>Task Tracker</Title>
+          <Title level={4} style={{ marginTop: 20, color: '#000000' }}>Task Tracker</Title>
         </div>
         
         <Form
@@ -62,6 +63,7 @@ export default function Login() {
               placeholder="Email" 
               size="large" 
               autoComplete="email"
+              style={{ color: 'black' }}
             />
           </Form.Item>
 
@@ -74,6 +76,7 @@ export default function Login() {
               placeholder="Password"
               size="large"
               autoComplete="current-password"
+              style={{ color: 'black' }}
             />
           </Form.Item>
 
