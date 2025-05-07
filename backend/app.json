@@ -1,8 +1,12 @@
 {
-  "name": "Task Tracker Backend",
-  "description": "NestJS backend for the Task Tracker application",
+  "name": "Police App Backend",
+  "description": "Backend API for Police Task Tracker application",
+  "keywords": ["node", "typescript", "nestjs", "api"],
+  "website": "https://github.com/destinpq/Police_App",
+  "repository": "https://github.com/destinpq/Police_App",
+  "success_url": "/",
   "scripts": {
-    "predeploy": "npm install && npm run build"
+    "postdeploy": "npm run db:reset"
   },
   "env": {
     "NODE_ENV": {
@@ -12,9 +16,26 @@
     "PORT": {
       "description": "Server port",
       "value": "8080"
+    },
+    "JWT_SECRET": {
+      "description": "A secret key for JWT token generation",
+      "generator": "secret"
+    },
+    "CLIENT_ORIGIN": {
+      "description": "Frontend URL",
+      "value": "https://walrus-app-r6lhp.ondigitalocean.app"
     }
   },
+  "addons": [
+    "heroku-postgresql:mini"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
   "engines": {
-    "node": "18.x"
+    "node": "18.x",
+    "npm": "9.x"
   }
 } 
