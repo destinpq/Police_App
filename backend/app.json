@@ -1,0 +1,20 @@
+{
+  "name": "Task Tracker Backend",
+  "description": "NestJS backend for the Task Tracker application",
+  "scripts": {
+    "predeploy": "npm install && npm run build"
+  },
+  "env": {
+    "NODE_ENV": {
+      "description": "Environment for Node.js application",
+      "value": "production"
+    },
+    "PORT": {
+      "description": "Server port",
+      "value": "4001"
+    }
+  },
+  "engines": {
+    "node": "18.x"
+  }
+} 

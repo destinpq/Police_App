@@ -9,8 +9,7 @@
         "repo": "destinpq/Police_App"
       },
       "source_dir": "backend",
-      "dockerfile_path": "backend/Dockerfile",
-      "build_command": "npm run build",
+      "build_command": "npm install && npm run build",
       "run_command": "./do-app-platform.sh",
       "http_port": 4001,
       "envs": [
