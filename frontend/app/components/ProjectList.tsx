@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Project } from '../types/project';
 import { ProjectService } from '../services/ProjectService';
-import { Modal, Button, Popconfirm, message, List, Card, Space, Typography } from 'antd';
+import { Modal, Button, Popconfirm, message, List, Card, Space } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import ProjectEditForm from './ProjectEditForm';
-
-const { Text } = Typography;
 
 // Create a type for the list data that allows the special "All Projects" entry 
 type ProjectListItem = Project | { id: number; name: string };
