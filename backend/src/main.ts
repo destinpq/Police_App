@@ -8,7 +8,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-  const port = process.env.PORT || configService.get<number>('PORT') || 3001;
+  const port = process.env.PORT || configService.get<number>('PORT') || 4001;
   
   // Log email configuration
   logger.log('Email configuration:');
@@ -18,7 +18,7 @@ async function bootstrap() {
   logger.log(`IMAP_HOST: ${configService.get('IMAP_HOST')}`);
   
   // Enable CORS - using environment variables or defaults
-  const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+  const clientOrigin = process.env.CLIENT_ORIGIN || configService.get<string>('CLIENT_ORIGIN') || 'http://localhost:3000';
   logger.log(`CORS enabled for origin: ${clientOrigin}`);
   
   app.enableCors({
@@ -28,7 +28,7 @@ async function bootstrap() {
   });
   
   await app.listen(port);
-  const serverUrl = process.env.SERVER_URL || `http://localhost:${port}`;
+  const serverUrl = process.env.SERVER_URL || configService.get<string>('SERVER_URL') || `http://localhost:${port}`;
   logger.log(`Backend application running on ${serverUrl}`);
   
   // Seed users after the application starts
