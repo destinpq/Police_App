@@ -1,1 +1,1 @@
-web: cd backend && npm run start:prod 
+web: cd backend && npm install && npm run build && npm run start:prod 
