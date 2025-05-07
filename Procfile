@@ -1,1 +1,1 @@
-web: cd backend && npm install && npm run build && npm run start:prod 
+web: cd backend && npm install && npm run build && NODE_ENV=production npm run start:prod 

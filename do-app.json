@@ -1,0 +1,30 @@
+{
+  "name": "Police Task Tracker",
+  "services": [
+    {
+      "name": "backend-service",
+      "github": {
+        "branch": "main",
+        "deploy_on_push": true,
+        "repo": "destinpq/Police_App"
+      },
+      "source_dir": "backend",
+      "dockerfile_path": "backend/Dockerfile",
+      "build_command": "npm run build",
+      "run_command": "./do-app-platform.sh",
+      "http_port": 4001,
+      "envs": [
+        {
+          "key": "NODE_ENV",
+          "scope": "RUN_TIME",
+          "value": "production"
+        },
+        {
+          "key": "PORT",
+          "scope": "RUN_TIME",
+          "value": "4001"
+        }
+      ]
+    }
+  ]
+} 
