@@ -48,6 +48,8 @@ import { ProjectStats } from './analytics/entities/project-stats.entity';
           };
         } else {
           // Use local configuration
+          const useSSL = configService.get('DB_SSL') === 'true';
+          
           return {
             type: 'postgres',
             host: configService.get('DB_HOST'),
@@ -64,6 +66,9 @@ import { ProjectStats } from './analytics/entities/project-stats.entity';
               ProjectStats,
             ],
             synchronize: true,
+            ssl: useSSL ? {
+              rejectUnauthorized: false // Required for most cloud database providers
+            } : false,
           };
         }
       },
