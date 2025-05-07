@@ -1,0 +1,19 @@
+{
+  "name": "DestinPQ Task Tracker",
+  "description": "A task tracking application for project management",
+  "repository": "https://github.com/destinpq/Police_App",
+  "keywords": ["node", "typescript", "nestjs", "nextjs", "task", "management"],
+  "env": {
+    "JWT_SECRET": {
+      "description": "A secret key for JWT token generation",
+      "generator": "secret"
+    },
+    "NODE_ENV": {
+      "description": "Environment for Node.js application",
+      "value": "production"
+    }
+  },
+  "scripts": {
+    "postdeploy": "cd backend && npm run db:reset"
+  }
+} 

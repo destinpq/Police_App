@@ -1,0 +1,634 @@
+/* ====== VARIABLES ====== */
+:root {
+  /* Colors */
+  --primary-color: #1677ff;
+  --primary-hover: #4096ff;
+  --primary-active: #0958d9;
+  --secondary-color: #52c41a;
+  --secondary-hover: #73d13d;
+  --secondary-active: #389e0d;
+  
+  /* Status Colors */
+  --todo-color: #e6f7ff;
+  --todo-border: #91caff;
+  --todo-text: #1890ff;
+  --in-progress-color: #fff7e6;
+  --in-progress-border: #ffd591;
+  --in-progress-text: #fa8c16;
+  --done-color: #f6ffed;
+  --done-border: #b7eb8f;
+  --done-text: #52c41a;
+  
+  /* Neutral Colors */
+  --background-color: #f5f5f5;
+  --card-background: #ffffff;
+  --text-color: #222222;
+  --text-secondary: #666666;
+  --border-color: #d9d9d9;
+  
+  /* Brand Colors */
+  --brand-primary: #000000;
+  --brand-secondary: #ffffff;
+  --brand-accent: #1677ff;
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+  
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  
+  /* Typography */
+  --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono',
+    'Roboto Mono', 'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro',
+    'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+  
+  /* Z-index */
+  --z-header: 100;
+  --z-modal: 1000;
+  --z-tooltip: 1500;
+  
+  /* Container max width */
+  --max-width: 1200px;
+}
+
+/* ====== RESET & BASE STYLES ====== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: var(--font-main);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-color);
+  background: var(--background-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+/* ====== LAYOUT STYLES ====== */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-lg);
+  width: 100%;
+}
+
+/* ====== HEADER STYLES ====== */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--space-lg);
+  background-color: var(--brand-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--brand-secondary);
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-right: var(--space-xl);
+  white-space: nowrap;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+}
+
+/* Fix for Ant Design Menu in header */
+.app-header .ant-menu {
+  background-color: var(--brand-primary) !important;
+  border-bottom: none !important;
+  color: var(--brand-secondary) !important;
+  line-height: 64px;
+  flex: 1;
+}
+
+.app-header .ant-menu-item {
+  color: rgba(255, 255, 255, 0.75) !important;
+  padding: 0 var(--space-md) !important;
+}
+
+.app-header .ant-menu-item:hover {
+  color: white !important;
+}
+
+.app-header .ant-menu-item-selected {
+  color: white !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.app-header .ant-menu-item::after {
+  border-bottom: 2px solid white !important;
+}
+
+.app-header a {
+  color: inherit !important;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.logout-btn {
+  border: 1px solid white !important;
+  border-radius: var(--radius-sm) !important;
+  padding: var(--space-xs) var(--space-md) !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent !important;
+  color: white !important;
+}
+
+.logout-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ====== TASK BOARD STYLES ====== */
+.task-board {
+  margin-bottom: var(--space-lg);
+}
+
+.board-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.task-column {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  height: 100%;
+  background-color: white;
+  transition: box-shadow 0.3s ease;
+}
+
+.task-column:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.column-todo {
+  background-color: var(--todo-color);
+  border: 1px solid var(--todo-border);
+}
+
+.column-in-progress {
+  background-color: var(--in-progress-color);
+  border: 1px solid var(--in-progress-border);
+}
+
+.column-done {
+  background-color: var(--done-color);
+  border: 1px solid var(--done-border);
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  padding: var(--space-md);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.column-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 10px;
+  font-size: 12px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-right: var(--space-sm);
+}
+
+.column-badge.todo {
+  background-color: var(--todo-text);
+}
+
+.column-badge.in-progress {
+  background-color: var(--in-progress-text);
+}
+
+.column-badge.done {
+  background-color: var(--done-text);
+}
+
+.column-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.column-content {
+  min-height: 200px;
+  padding: var(--space-md);
+  transition: background-color 0.2s ease;
+}
+
+.column-content.is-dragging-over {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* ====== TASK CARD STYLES ====== */
+.task-card {
+  background-color: white;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-sm);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  cursor: grab;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.task-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.task-card:active {
+  cursor: grabbing;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.task-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70%;
+}
+
+.task-status {
+  display: inline-block;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-open {
+  background-color: var(--todo-color);
+  color: var(--todo-text);
+}
+
+.status-in-progress {
+  background-color: var(--in-progress-color);
+  color: var(--in-progress-text);
+}
+
+.status-done {
+  background-color: var(--done-color);
+  color: var(--done-text);
+}
+
+.card-body {
+  padding: var(--space-md);
+}
+
+.task-description {
+  margin-bottom: var(--space-sm);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.task-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.task-meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: 4px;
+}
+
+.task-assignee {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px dashed rgba(0, 0, 0, 0.06);
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  color: #999;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs) var(--space-sm);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background-color: transparent;
+}
+
+.btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.btn-danger:hover {
+  color: #f5222d;
+}
+
+.tag-overdue {
+  background-color: #fff1f0;
+  color: #f5222d;
+  border: 1px solid #ffa39e;
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  margin-left: var(--space-xs);
+}
+
+/* ====== FORM STYLES ====== */
+.form-container {
+  padding: var(--space-lg) 0;
+}
+
+.form-row {
+  margin-bottom: var(--space-md);
+}
+
+.button-group {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+/* ====== LOADING STATES ====== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  margin: var(--space-lg) 0;
+  text-align: center;
+}
+
+.loading-text {
+  margin-top: var(--space-md);
+  color: var(--text-secondary);
+}
+
+/* ====== RESPONSIVE STYLES ====== */
+@media (max-width: 1024px) {
+  .board-columns {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-md);
+  }
+  
+  .app-header {
+    padding: 0 var(--space-md);
+    height: auto;
+    min-height: 64px;
+    flex-direction: column;
+  }
+  
+  .app-nav {
+    width: 100%;
+    margin: var(--space-sm) 0;
+  }
+  
+  .user-menu {
+    width: 100%;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+  }
+}
+
+@media (max-width: 576px) {
+  .board-columns {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+  
+  .task-column {
+    margin-bottom: var(--space-md);
+  }
+  
+  .app-header {
+    padding: var(--space-sm);
+  }
+  
+  .app-logo {
+    font-size: 1.2rem;
+  }
+  
+  .user-info {
+    display: none;
+  }
+}
+
+/* ====== Login Page Styles ====== */
+.login-page {
+  background-color: var(--brand-primary);
+  color: var(--brand-secondary);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  background-color: var(--brand-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  width: 400px;
+  max-width: 90%;
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+/* Ensure text colors in header */
+.app-header .app-logo span {
+  color: var(--brand-secondary);
+  margin-left: var(--space-sm);
+}
+
+/* Login form input styling */
+.login-card .ant-input-affix-wrapper {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--brand-secondary);
+}
+
+.login-card .ant-input-affix-wrapper:hover,
+.login-card .ant-input-affix-wrapper:focus,
+.login-card .ant-input-affix-wrapper-focused {
+  border-color: var(--brand-accent);
+}
+
+.login-card .ant-form-item-label > label {
+  color: var(--brand-secondary);
+}
+
+.login-card .ant-input {
+  background-color: transparent;
+  color: var(--brand-secondary);
+}
+
+.login-card .ant-input-password-icon {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.login-card .ant-card-body {
+  background-color: var(--brand-primary);
+  color: var(--brand-secondary);
+}
+
+/* Login button styling */
+.login-button {
+  background-color: var(--brand-secondary) !important;
+  color: var(--brand-primary) !important;
+  border: 2px solid var(--brand-secondary) !important;
+  font-weight: 600 !important;
+  height: 44px !important;
+  transition: all 0.3s ease !important;
+}
+
+.login-button:hover, 
+.login-button:focus {
+  background-color: transparent !important;
+  color: var(--brand-secondary) !important;
+  border-color: var(--brand-secondary) !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3) !important;
+}
+
+.login-button:active {
+  transform: scale(0.98) !important;
+}
+
+/* Add to the top of the file */
+.ant-input,
+.ant-input-password input {
+  color: black !important;
+}
+
+.ant-form-item-explain-error {
+  color: #ff4d4f !important;
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* Ensure the login card has a proper background and text color */
+.login-card {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.login-card .ant-card-body {
+  color: black;
+}
+
+/* Make login button visible */
+.login-button {
+  background-color: #1677ff !important;
+  color: white !important;
+  border-color: #1677ff !important;
+}
+
+/* Ensure form labels are visible */
+.ant-form-item-label > label {
+  color: black !important;
+}
