@@ -13,6 +13,11 @@
       "value": "production"
     }
   },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
   "scripts": {
     "postdeploy": "cd backend && npm run db:reset"
   }
