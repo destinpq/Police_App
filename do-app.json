@@ -11,7 +11,7 @@
       "source_dir": "backend",
       "build_command": "npm install && npm run build",
       "run_command": "./deploy-do.sh",
-      "http_port": 4001,
+      "http_port": 8080,
       "envs": [
         {
           "key": "NODE_ENV",
@@ -21,7 +21,7 @@
         {
           "key": "PORT",
           "scope": "RUN_TIME",
-          "value": "4001"
+          "value": "8080"
         }
       ]
     }

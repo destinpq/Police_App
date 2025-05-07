@@ -8,7 +8,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-  const port = process.env.PORT || configService.get<number>('PORT') || 4001;
+  const port = process.env.PORT || configService.get<number>('PORT') || 8080;
   
   // Log email configuration
   logger.log('Email configuration:');

@@ -20,6 +20,11 @@ echo "NPM version: $(npm -v)"
 echo "Operating system: $(uname -a)"
 echo "Working directory: $(pwd)"
 
+# Set the port to 8080
+echo "=== Setting environment variables ==="
+export PORT=8080
+echo "Port set to: $PORT"
+
 # Show build output
 echo "=== Dist Directory Contents ==="
 if [ -d "dist" ]; then
@@ -42,5 +47,5 @@ echo "Files list created at files.txt"
 
 # Start the application using the direct server script
 echo "=== Starting application with direct server.js ==="
-echo "LOG: Using direct server.js entry point"
+echo "LOG: Using direct server.js entry point on port 8080"
 node server.js 

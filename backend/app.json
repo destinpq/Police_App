@@ -11,7 +11,7 @@
     },
     "PORT": {
       "description": "Server port",
-      "value": "4001"
+      "value": "8080"
     }
   },
   "engines": {
