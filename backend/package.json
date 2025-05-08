@@ -16,7 +16,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main.js",
+    "start:prod": "node dist/src/main.js",
     "start:direct": "node server.js",
     "seed": "ts-node src/seed.ts",
     "db:reset": "ts-node reset-db.ts && npm run seed",
@@ -26,7 +26,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "npm install --legacy-peer-deps && npm install -g @nestjs/cli && npm run build"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -34,6 +34,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/node": "^22.10.7",
     "axios": "^1.9.0",
     "nodemailer": "^6.10.1",
     "pg": "^8.15.6",
@@ -52,7 +53,6 @@
     "@swc/core": "^1.10.7",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.10.7",
     "@types/nodemailer": "^6.4.17",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",

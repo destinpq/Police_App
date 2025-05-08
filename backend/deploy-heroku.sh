@@ -30,7 +30,7 @@ fi
 # Add PostgreSQL addon if it doesn't exist
 if ! heroku addons:info --app $APP_NAME postgresql &> /dev/null; then
     echo "Adding PostgreSQL addon..."
-    heroku addons:create heroku-postgresql:mini --app $APP_NAME
+    heroku addons:create heroku-postgresql:essential-0 --app $APP_NAME
 else
     echo "PostgreSQL addon already exists"
 fi
@@ -70,7 +70,7 @@ git push heroku HEAD:main -f
 
 # Run database migrations
 echo "Running database migrations..."
-heroku run "npm run db:reset" --app $APP_NAME
+heroku run "node heroku-db-init.js" --app $APP_NAME
 
 echo "Deployment completed successfully!"
 echo "Your backend API is available at: https://$APP_NAME.herokuapp.com"

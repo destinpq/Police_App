@@ -1,24 +1,41 @@
 {
-  "name": "DestinPQ Task Tracker",
-  "description": "A task tracking application for project management",
+  "name": "Police App Backend",
+  "description": "Backend API for Police Task Tracker application",
+  "keywords": ["node", "typescript", "nestjs", "api"],
+  "website": "https://github.com/destinpq/Police_App",
   "repository": "https://github.com/destinpq/Police_App",
-  "keywords": ["node", "typescript", "nestjs", "nextjs", "task", "management"],
+  "success_url": "/",
+  "scripts": {
+    "postdeploy": "npm run db:reset"
+  },
   "env": {
+    "NODE_ENV": {
+      "description": "Environment for Node.js application",
+      "value": "production"
+    },
+    "PORT": {
+      "description": "Server port",
+      "value": "8080"
+    },
     "JWT_SECRET": {
       "description": "A secret key for JWT token generation",
       "generator": "secret"
     },
-    "NODE_ENV": {
-      "description": "Environment for Node.js application",
-      "value": "production"
+    "CLIENT_ORIGIN": {
+      "description": "Frontend URL",
+      "value": "https://walrus-app-r6lhp.ondigitalocean.app"
     }
   },
+  "addons": [
+    "heroku-postgresql:essential-0"
+  ],
   "buildpacks": [
     {
       "url": "heroku/nodejs"
     }
   ],
-  "scripts": {
-    "postdeploy": "cd backend && npm run db:reset"
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
   }
 } 
