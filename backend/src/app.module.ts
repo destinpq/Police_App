@@ -26,80 +26,37 @@ import { ProjectStats } from './analytics/entities/project-stats.entity';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const databaseUrl = process.env.DATABASE_URL;
-
-        // Heroku specific configuration - parse the DATABASE_URL
-        if (databaseUrl) {
-          // Support for Heroku PostgreSQL URL format
-          // postgres://user:password@host:port/database
-          console.log('Using Heroku DATABASE_URL for connection');
-          
-          // Define the entities
-          const entities = [
-            User,
-            Task,
-            Project,
-            AccuracyRating,
-            UserStats,
-            ProjectStats,
-          ];
-          
-          return {
-            type: 'postgres',
-            url: databaseUrl,
-            entities,
-            synchronize: true,
-            ssl: {
-              rejectUnauthorized: false, // Required for Heroku PostgreSQL
-            },
-          };
-        } else if (process.env.DB_HOST && process.env.DB_PORT) {
-          // Manual connection configuration from environment variables
-          console.log('Using individual environment variables for database connection');
-          
-          const useSSL = configService.get('DB_SSL') === 'true';
-          const dbPort = configService.get('DB_PORT');
-          
-          return {
-            type: 'postgres',
-            host: configService.get('DB_HOST'),
-            port: dbPort ? parseInt(dbPort) : 5432,
-            username: configService.get('DB_USERNAME'),
-            password: configService.get('DB_PASSWORD'),
-            database: configService.get('DB_DATABASE'),
-            entities: [
-              User,
-              Task,
-              Project,
-              AccuracyRating,
-              UserStats,
-              ProjectStats,
-            ],
-            synchronize: true,
-            ssl: useSSL ? { rejectUnauthorized: false } : false,
-          };
-        } else {
-          // Fallback for local development
-          console.log('Using fallback local database connection');
-          
-          return {
-            type: 'postgres',
-            host: 'localhost',
-            port: 5432,
-            username: 'postgres',
-            password: 'postgres',
-            database: 'tasktracker',
-            entities: [
-              User,
-              Task,
-              Project,
-              AccuracyRating,
-              UserStats,
-              ProjectStats,
-            ],
-            synchronize: true,
-          };
-        }
+        const entities = [
+          User,
+          Task,
+          Project,
+          AccuracyRating,
+          UserStats,
+          ProjectStats,
+        ];
+        
+        // Always use Digital Ocean configuration
+        console.log('Using Digital Ocean PostgreSQL connection');
+        const useSSL = configService.get('DB_SSL') === 'true';
+        const sslMode = configService.get('DB_SSL_MODE');
+        const dbPort = configService.get('DB_PORT');
+        
+        return {
+          type: 'postgres',
+          host: configService.get('DB_HOST'),
+          port: dbPort ? parseInt(dbPort) : 5432,
+          username: configService.get('DB_USERNAME'),
+          password: configService.get('DB_PASSWORD'),
+          database: configService.get('DB_DATABASE'),
+          entities,
+          synchronize: true,
+          ssl: useSSL ? { 
+            rejectUnauthorized: false,
+            mode: sslMode
+          } : false,
+          logging: ["query", "error"],
+          logger: "advanced-console",
+        };
       },
     }),
     TasksModule,
