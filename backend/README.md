@@ -96,3 +96,64 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Database Management
+
+### Database Configuration
+To connect to the Digital Ocean PostgreSQL database, create a `.env` file in the backend directory with the following content:
+```
+# Database Configuration
+DB_HOST=db-postgresql-blr1-02124-do-user-15903936-0.k.db.ondigitalocean.com
+DB_PORT=25060
+DB_USERNAME=doadmin
+DB_PASSWORD=your-password-here
+DB_DATABASE=defaultdb
+DB_SSL=true
+
+# Environment
+NODE_ENV=development
+
+# JWT Secret
+JWT_SECRET=your-jwt-secret-key
+
+# CORS Configuration
+CLIENT_ORIGIN=*
+```
+
+### Reset Database
+To reset the database and run all migrations:
+```
+npm run db:reset
+```
+
+### Seed Database from JSON
+To seed the database with data from a JSON dump file:
+```
+npm run db:seed
+```
+
+This will populate the database with users, projects, and tasks from `db_dump.json` at the root of the project. The seed function will:
+
+1. Load data from `db_dump.json`
+2. Create necessary database tables if they don't exist
+3. Insert users with the default password: `DestinPQ@24225`
+4. Create projects and tasks as specified in the JSON file
+5. Update existing records rather than creating duplicates if they already exist
+
+### Required JSON Structure
+The JSON file should have the following structure:
+```json
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@example.com",
+      "name": "Admin User",
+      "isAdmin": true
+    },
+    ...
+  ],
+  "projects": [...],
+  "tasks": [...]
+}
+```
