@@ -96,3 +96,42 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Database Management
+
+### Reset Database
+To reset the database and run all migrations:
+```
+npm run db:reset
+```
+
+### Seed Database from JSON
+To seed the database with data from a JSON dump file:
+```
+npm run db:seed
+```
+
+This will populate the database with users, projects, and tasks from `db_dump.json` at the root of the project. The seed function will:
+
+1. Load data from `db_dump.json`
+2. Insert users with the default password: `DestinPQ@24225`
+3. Create projects and tasks as specified in the JSON file
+4. Update existing records rather than creating duplicates if they already exist
+
+### Required JSON Structure
+The JSON file should have the following structure:
+```json
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@example.com",
+      "name": "Admin User",
+      "isAdmin": true
+    },
+    ...
+  ],
+  "projects": [...],
+  "tasks": [...]
+}
+```
