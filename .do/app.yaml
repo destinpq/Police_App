@@ -1,0 +1,22 @@
+name: police-task-tracker
+region: nyc
+services:
+  - name: police-app-backend
+    github:
+      repo: destinpq/Police_App
+      branch: fix-deployment
+      deploy_on_push: true
+    source_dir: backend
+    http_port: 8080
+    build_command: npm install && npm run build
+    run_command: node server.js
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+    routes:
+      - path: /api
+    health_check:
+      http_path: /
+      port: 8080 
