@@ -1,0 +1,20 @@
+                                                                 json_agg                                                                 
+------------------------------------------------------------------------------------------------------------------------------------------
+ [{"id":1,"email":"admin@destinpq.com","name":"Admin User","isAdmin":true,"created_at":"2025-05-07T12:46:52.69195"},                     +
+  {"id":34,"email":"drakanksha@destinpq.com","name":"Dr Akanksha","isAdmin":true,"created_at":"2025-05-08T15:14:17.55877"},              +
+  {"id":35,"email":"mohitagrwal@destinpq.com","name":"Mohit Agarwal","isAdmin":true,"created_at":"2025-05-08T15:15:21.313395"},          +
+  {"id":36,"email":"pratik@destinpq.com","name":"Pratik","isAdmin":true,"created_at":"2025-05-08T15:15:38.398156"},                      +
+  {"id":37,"email":"tejaswi.rangineni@desinpq.com","name":"Tejaswi Rangineni","isAdmin":true,"created_at":"2025-05-08T15:15:50.211512"}, +
+  {"id":38,"email":"shaurya.bansal@destnipq.com","name":"Shaurya Bansal","isAdmin":true,"created_at":"2025-05-08T15:16:17.601304"}]
+(1 row)
+
+ json_agg 
+----------
+ 
+(1 row)
+
+ json_agg 
+----------
+ 
+(1 row)
+
