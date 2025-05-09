@@ -40,7 +40,7 @@ services:
       # Mail Configuration for GoDaddy
       - key: MAIL_HOST
         scope: RUN_TIME
-        value: "smtpout.secureserver.net"
+        value: smtpout.secureserver.net
       - key: MAIL_PORT
         scope: RUN_TIME
         value: "465"
@@ -49,13 +49,13 @@ services:
         value: "true"
       - key: MAIL_USER
         scope: RUN_TIME
-        value: "support@destinpq.com"
+        value: support@destinpq.com
       - key: MAIL_PASSWORD
         scope: RUN_TIME
-        value: "DestinPQ@24225"
+        value: DestinPQ@24225
       - key: MAIL_FROM
         scope: RUN_TIME
-        value: "support@destinpq.com"
+        value: support@destinpq.com
     http_port: 8080
     health_check:
       http_path: /

@@ -10,7 +10,7 @@
     "npm": "9.x"
   },
   "scripts": {
-    "build": "nest build && echo 'Build complete. Dist directory:' && ls -la dist",
+    "build": "nest build && echo 'Build complete. Dist directory:' && ls -la dist && node remove-heroku-refs.js",
     "build:digitalocean": "npm install && nest build && ls -la dist",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
