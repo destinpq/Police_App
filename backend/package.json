@@ -1,8 +1,8 @@
 {
   "name": "backend",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Police Task Tracker Backend",
+  "author": "DestinPQ",
   "private": true,
   "license": "UNLICENSED",
   "engines": {
@@ -26,7 +26,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "heroku-postbuild": "npm install --legacy-peer-deps && npm install -g @nestjs/cli && npm run build"
+    "postinstall": "node patch-crypto.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -36,6 +36,7 @@
     "@nestjs/typeorm": "^11.0.0",
     "@types/node": "^22.10.7",
     "axios": "^1.9.0",
+    "crypto": "^1.0.1",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "nodemailer": "^6.10.1",
