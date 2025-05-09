@@ -1,0 +1,49 @@
+name: police-task-tracker-api
+region: blr
+services:
+  - name: police-app-backend
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: destinpq/Police_App
+    source_dir: backend
+    build_command: npm install && npm run build
+    run_command: node server.js
+    envs:
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: production
+      - key: PORT
+        scope: RUN_TIME
+        value: "8080"
+      - key: DB_HOST
+        scope: RUN_TIME
+        value: ${db.HOSTNAME}
+      - key: DB_PORT
+        scope: RUN_TIME
+        value: ${db.PORT}
+      - key: DB_USERNAME
+        scope: RUN_TIME
+        value: ${db.USERNAME}
+      - key: DB_PASSWORD
+        scope: RUN_TIME
+        value: ${db.PASSWORD}
+      - key: DB_DATABASE
+        scope: RUN_TIME
+        value: ${db.DATABASE}
+      - key: DB_SSL
+        scope: RUN_TIME
+        value: "true"
+      - key: DB_SSL_MODE
+        scope: RUN_TIME
+        value: "require"
+    http_port: 8080
+    health_check:
+      http_path: /
+      initial_delay_seconds: 10
+      period_seconds: 5
+    routes:
+      - path: /
+databases:
+  - name: db
+    engine: PG 
