@@ -12,22 +12,36 @@ export class NotificationService {
   private readonly mailFrom: string;
 
   constructor(private configService: ConfigService) {
+    // Get mail configuration from environment
+    const mailHost = this.configService.get<string>('MAIL_HOST');
+    const mailPort = parseInt(this.configService.get<string>('MAIL_PORT') || '465', 10);
+    const mailSecure = this.configService.get<string>('MAIL_SECURE') === 'true';
     this.mailUser = this.configService.get<string>('MAIL_USER') || '';
+    const mailPassword = this.configService.get<string>('MAIL_PASSWORD') || '';
     this.mailFrom = this.configService.get<string>('MAIL_FROM') || '';
+    
+    // Log mail configuration (without password) for debugging
+    this.logger.log(`Mail configuration: Host=${mailHost}, Port=${mailPort}, Secure=${mailSecure}, User=${this.mailUser}, From=${this.mailFrom}`);
+    
+    if (!mailHost || !this.mailUser || !mailPassword) {
+      this.logger.error('Mail configuration is incomplete. Email notifications will not work.');
+      return;
+    }
     
     // Initialize the transporter with GoDaddy SMTP settings (for sending)
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('MAIL_HOST') || '',
-      port: parseInt(this.configService.get<string>('MAIL_PORT') || '587', 10),
-      secure: this.configService.get<string>('MAIL_SECURE') === 'true',
+      host: mailHost,
+      port: mailPort,
+      secure: mailSecure, // true for 465, false for other ports
       auth: {
         user: this.mailUser,
-        pass: this.configService.get<string>('MAIL_PASSWORD') || '',
+        pass: mailPassword,
       },
       tls: {
         // Do not fail on invalid certificates
         rejectUnauthorized: false,
       },
+      debug: true, // Enable debug output
     });
 
     // Verify connection configuration
@@ -39,12 +53,19 @@ export class NotificationService {
    */
   private async verifyConnection(): Promise<boolean> {
     try {
+      this.logger.log('Verifying SMTP connection...');
       await this.transporter.verify();
       this.logger.log('SMTP connection established successfully');
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error(`Failed to establish SMTP connection: ${errorMessage}`);
+      
+      // Log additional information about the error
+      if (error instanceof Error && 'code' in error) {
+        this.logger.error(`Error code: ${(error as any).code}`);
+      }
+      
       return false;
     }
   }
@@ -53,6 +74,11 @@ export class NotificationService {
    * Send a task assignment notification email
    */
   async sendTaskAssignmentNotification(user: User, task: Task): Promise<void> {
+    if (!this.transporter) {
+      this.logger.error('Cannot send email: mail transporter not initialized');
+      return;
+    }
+    
     try {
       const mailOptions = {
         from: {
