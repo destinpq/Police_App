@@ -1,0 +1,23 @@
+{
+  "name": "Police Task Tracker Backend",
+  "services": [
+    {
+      "name": "police-app-backend",
+      "build_command": "npm install && npm run build",
+      "run_command": "node server.js",
+      "http_port": 8080,
+      "envs": [
+        {
+          "key": "NODE_ENV",
+          "scope": "RUN_TIME",
+          "value": "production"
+        },
+        {
+          "key": "PORT",
+          "scope": "RUN_TIME",
+          "value": "8080"
+        }
+      ]
+    }
+  ]
+} 
