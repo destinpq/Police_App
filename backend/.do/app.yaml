@@ -15,6 +15,8 @@ services:
         value: production
       - key: PORT
         value: "8080"
+      - key: CLIENT_ORIGIN
+        value: "https://walrus-app-r6lhp.ondigitalocean.app"
     routes:
       - path: /api
     health_check:
