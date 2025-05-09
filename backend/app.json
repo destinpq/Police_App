@@ -1,41 +1,74 @@
 {
-  "name": "Police App Backend",
-  "description": "Backend API for Police Task Tracker application",
-  "keywords": ["node", "typescript", "nestjs", "api"],
-  "website": "https://github.com/destinpq/Police_App",
-  "repository": "https://github.com/destinpq/Police_App",
-  "success_url": "/",
-  "scripts": {
-    "postdeploy": "npm run db:reset"
-  },
-  "env": {
-    "NODE_ENV": {
-      "description": "Environment for Node.js application",
-      "value": "production"
-    },
-    "PORT": {
-      "description": "Server port",
-      "value": "8080"
-    },
-    "JWT_SECRET": {
-      "description": "A secret key for JWT token generation",
-      "generator": "secret"
-    },
-    "CLIENT_ORIGIN": {
-      "description": "Frontend URL",
-      "value": "https://walrus-app-r6lhp.ondigitalocean.app"
-    }
-  },
-  "addons": [
-    "heroku-postgresql:essential-0"
-  ],
-  "buildpacks": [
+  "name": "police-app-backend",
+  "services": [
     {
-      "url": "heroku/nodejs"
+      "name": "api",
+      "github": {
+        "repo": "destinpq/Police_App",
+        "branch": "main",
+        "deploy_on_push": true
+      },
+      "source_dir": "backend",
+      "environment_slug": "node-js",
+      "envs": [
+        {
+          "key": "PORT",
+          "value": "8080"
+        },
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "DB_HOST",
+          "value": "${db-postgresql.HOSTNAME}"
+        },
+        {
+          "key": "DB_PORT",
+          "value": "${db-postgresql.PORT}"
+        },
+        {
+          "key": "DB_USERNAME",
+          "value": "${db-postgresql.USERNAME}"
+        },
+        {
+          "key": "DB_PASSWORD",
+          "value": "${db-postgresql.PASSWORD}"
+        },
+        {
+          "key": "DB_DATABASE",
+          "value": "${db-postgresql.DATABASE}"
+        },
+        {
+          "key": "DB_SSL",
+          "value": "true"
+        },
+        {
+          "key": "CLIENT_ORIGIN",
+          "value": "https://walrus-app-r6lhp.ondigitalocean.app"
+        }
+      ],
+      "http_port": 8080,
+      "instance_count": 1,
+      "instance_size_slug": "basic-xxs",
+      "routes": [
+        {
+          "path": "/"
+        }
+      ],
+      "run_command": "npm start",
+      "build_command": "npm run build"
     }
   ],
-  "engines": {
-    "node": "18.x",
-    "npm": "9.x"
-  }
+  "databases": [
+    {
+      "name": "db-postgresql",
+      "engine": "PG",
+      "version": "15",
+      "production": true,
+      "cluster_name": "police-app-db",
+      "db_name": "defaultdb",
+      "db_user": "doadmin"
+    }
+  ]
 } 
