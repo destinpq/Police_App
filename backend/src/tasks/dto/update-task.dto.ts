@@ -7,5 +7,6 @@ export class UpdateTaskDto {
   deadline?: Date | null;
   completedAt?: Date | null;
   project_id?: number;
+  milestone_id?: number | null;
   moneySpent?: number | null;
 } 

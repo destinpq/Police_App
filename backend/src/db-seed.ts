@@ -6,11 +6,14 @@ import { getConnectionOptions, createConnection, Connection, DeepPartial, DataSo
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
+import { EntityManager } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 // Import entity classes
 import { User } from './user/entities/user.entity';
 import { Project } from './project/entities/project.entity';
 import { Task } from './tasks/entities/task.entity';
+import { Milestone } from './project/entities/milestone.entity';
 
 // Load environment variables
 dotenv.config();
@@ -48,6 +51,38 @@ interface TaskData {
   updated_at?: string;
 }
 
+interface SeedUser {
+  email: string;
+  password: string;
+  isAdmin: boolean;
+}
+
+interface SeedProject {
+  name: string;
+  description: string;
+  budget?: number;
+  budgetCurrency?: string;
+}
+
+interface SeedMilestone {
+  name: string;
+  description: string;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+  deadline?: Date;
+  projectIndex: number;
+}
+
+interface SeedTask {
+  title: string;
+  description: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'DONE';
+  assigneeIndex?: number;
+  projectIndex: number;
+  milestoneIndex?: number;
+  deadline?: Date;
+  moneySpent?: number;
+}
+
 async function bootstrap() {
   logger.log('Starting database seed process...');
 
@@ -64,7 +99,7 @@ async function bootstrap() {
         rejectUnauthorized: false,
       } : false,
       synchronize: false,
-      entities: [User, Project, Task],
+      entities: [User, Project, Task, Milestone],
     };
 
     logger.log(`Connecting to database at ${dbConfig.host}:${dbConfig.port}...`);
@@ -166,6 +201,19 @@ async function bootstrap() {
           "moneySpent" NUMERIC(10,2) DEFAULT 0,
           created_at TIMESTAMP DEFAULT NOW(),
           updated_at TIMESTAMP DEFAULT NOW()
+        );
+      `);
+      
+      // Check if milestone table exists, create if needed
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS milestone (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          description TEXT,
+          status VARCHAR(50) DEFAULT 'NOT_STARTED',
+          deadline TIMESTAMP,
+          "projectId" INTEGER REFERENCES project(id),
+          created_at TIMESTAMP DEFAULT NOW()
         );
       `);
       
@@ -337,6 +385,246 @@ async function bootstrap() {
     logger.error(`Error during database seeding: ${error.message}`);
     logger.error(error.stack);
     process.exit(1);
+  }
+}
+
+export class DbSeed {
+  private readonly users: SeedUser[] = [
+    {
+      email: 'admin@example.com',
+      password: 'admin123',
+      isAdmin: true,
+    },
+    {
+      email: 'user@example.com',
+      password: 'user123',
+      isAdmin: false,
+    },
+  ];
+
+  private readonly projects: SeedProject[] = [
+    {
+      name: 'Website Redesign',
+      description: 'Modernize our company website with new design and features',
+      budget: 5000,
+      budgetCurrency: 'USD',
+    },
+    {
+      name: 'Mobile App Development',
+      description: 'Create a new mobile app for iOS and Android',
+      budget: 12000,
+      budgetCurrency: 'USD',
+    },
+    {
+      name: 'Marketing Campaign',
+      description: 'Run a marketing campaign for Q4',
+      budget: 3000,
+      budgetCurrency: 'USD',
+    },
+  ];
+
+  private readonly milestones: SeedMilestone[] = [
+    {
+      name: 'Design Phase',
+      description: 'Complete all design mockups and get approval',
+      status: 'COMPLETED',
+      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      projectIndex: 0, // Website Redesign
+    },
+    {
+      name: 'Development Phase',
+      description: 'Implement the approved designs',
+      status: 'IN_PROGRESS',
+      deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+      projectIndex: 0, // Website Redesign
+    },
+    {
+      name: 'Testing Phase',
+      description: 'Test all features and fix bugs',
+      status: 'NOT_STARTED',
+      deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000), // 21 days from now
+      projectIndex: 0, // Website Redesign
+    },
+    {
+      name: 'MVP Release',
+      description: 'Release the minimum viable product',
+      status: 'NOT_STARTED',
+      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      projectIndex: 1, // Mobile App Development
+    },
+    {
+      name: 'Beta Testing',
+      description: 'Conduct beta testing with selected users',
+      status: 'NOT_STARTED',
+      deadline: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), // 45 days from now
+      projectIndex: 1, // Mobile App Development
+    },
+  ];
+
+  private readonly tasks: SeedTask[] = [
+    {
+      title: 'Create wireframes',
+      description: 'Design wireframes for all pages',
+      status: 'DONE',
+      assigneeIndex: 0,
+      projectIndex: 0,
+      milestoneIndex: 0,
+      deadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+      moneySpent: 500,
+    },
+    {
+      title: 'Develop homepage',
+      description: 'Code the homepage according to the design',
+      status: 'IN_PROGRESS',
+      assigneeIndex: 1,
+      projectIndex: 0,
+      milestoneIndex: 1,
+      deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
+      moneySpent: 800,
+    },
+    {
+      title: 'Setup testing environment',
+      description: 'Prepare the environment for testing',
+      status: 'OPEN',
+      projectIndex: 0,
+      milestoneIndex: 2,
+      deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
+    },
+    {
+      title: 'Design app screens',
+      description: 'Create design mockups for all app screens',
+      status: 'IN_PROGRESS',
+      assigneeIndex: 0,
+      projectIndex: 1,
+      milestoneIndex: 3,
+      deadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), // 20 days from now
+      moneySpent: 1200,
+    },
+    {
+      title: 'Create marketing materials',
+      description: 'Design and create marketing materials for the campaign',
+      status: 'OPEN',
+      projectIndex: 2,
+      deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), // 25 days from now
+    },
+  ];
+
+  constructor(private readonly entityManager: EntityManager) {}
+
+  async seed(): Promise<void> {
+    const createdUsers = await this.seedUsers();
+    const createdProjects = await this.seedProjects();
+    const createdMilestones = await this.seedMilestones(createdProjects);
+    await this.seedTasks(createdUsers, createdProjects, createdMilestones);
+
+    console.log('Database seed completed successfully!');
+  }
+
+  private async seedUsers(): Promise<User[]> {
+    const createdUsers: User[] = [];
+
+    for (const userData of this.users) {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      
+      const user = this.entityManager.create(User, {
+        email: userData.email,
+        password: hashedPassword,
+        isAdmin: userData.isAdmin,
+      });
+
+      createdUsers.push(await this.entityManager.save(user));
+    }
+
+    console.log(`Seeded ${createdUsers.length} users`);
+    return createdUsers;
+  }
+
+  private async seedProjects(): Promise<Project[]> {
+    const createdProjects: Project[] = [];
+
+    for (const projectData of this.projects) {
+      const project = this.entityManager.create(Project, {
+        name: projectData.name,
+        description: projectData.description,
+        budget: projectData.budget,
+        budgetSpent: 0,
+        budgetCurrency: projectData.budgetCurrency,
+      });
+
+      createdProjects.push(await this.entityManager.save(project));
+    }
+
+    console.log(`Seeded ${createdProjects.length} projects`);
+    return createdProjects;
+  }
+
+  private async seedMilestones(projects: Project[]): Promise<Milestone[]> {
+    const createdMilestones: Milestone[] = [];
+
+    for (const milestoneData of this.milestones) {
+      const project = projects[milestoneData.projectIndex];
+      
+      if (!project) {
+        console.warn(`Project at index ${milestoneData.projectIndex} not found, skipping milestone ${milestoneData.name}`);
+        continue;
+      }
+
+      const milestone = this.entityManager.create(Milestone, {
+        name: milestoneData.name,
+        description: milestoneData.description,
+        status: milestoneData.status,
+        deadline: milestoneData.deadline,
+        project_id: project.id,
+        project: project,
+      });
+
+      createdMilestones.push(await this.entityManager.save(milestone));
+    }
+
+    console.log(`Seeded ${createdMilestones.length} milestones`);
+    return createdMilestones;
+  }
+
+  private async seedTasks(users: User[], projects: Project[], milestones: Milestone[]): Promise<void> {
+    const createdTasks: Task[] = [];
+
+    for (const taskData of this.tasks) {
+      const project = projects[taskData.projectIndex];
+      
+      if (!project) {
+        console.warn(`Project at index ${taskData.projectIndex} not found, skipping task ${taskData.title}`);
+        continue;
+      }
+
+      let milestone = null;
+      if (taskData.milestoneIndex !== undefined && milestones[taskData.milestoneIndex]) {
+        milestone = milestones[taskData.milestoneIndex];
+      }
+
+      let assignee = null;
+      if (taskData.assigneeIndex !== undefined && users[taskData.assigneeIndex]) {
+        assignee = users[taskData.assigneeIndex];
+      }
+
+      const task = this.entityManager.create(Task, {
+        title: taskData.title,
+        description: taskData.description,
+        status: taskData.status,
+        assignee: assignee,
+        assignee_id: assignee?.id,
+        project: project,
+        project_id: project.id,
+        milestone: milestone,
+        milestone_id: milestone?.id,
+        deadline: taskData.deadline,
+        moneySpent: taskData.moneySpent || 0,
+        completedAt: taskData.status === 'DONE' ? new Date() : null,
+      });
+
+      createdTasks.push(await this.entityManager.save(task));
+    }
+
+    console.log(`Seeded ${createdTasks.length} tasks`);
   }
 }
 

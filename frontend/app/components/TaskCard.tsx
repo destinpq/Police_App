@@ -1,121 +1,117 @@
 'use client';
 
-import { FC } from 'react';
-import { Tooltip } from 'antd';
-import { EditOutlined, DeleteOutlined, UserOutlined, ProjectOutlined, CalendarOutlined, DollarOutlined } from '@ant-design/icons';
+import React from 'react';
+import { Card, Tag, Button, Typography, Tooltip, Dropdown, Menu } from 'antd';
 import { Task } from '../types/task';
-import { FixedParagraph } from './fixed-typography';
+import { EditOutlined, DeleteOutlined, MoreOutlined, ClockCircleOutlined, FlagOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+
+const { Text, Paragraph } = Typography;
 
 interface TaskCardProps {
   task: Task;
-  onEdit: (task: Task) => void;
-  onDelete: (taskId: number) => void;
-  isAdmin: boolean;
+  onEdit?: (task: Task) => void;
+  onDelete?: (taskId: number) => void;
 }
 
-type TaskStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE';
-
-const getStatusTag = (status: string) => {
-  const statusClasses: Record<TaskStatus, string> = {
-    'OPEN': 'status-open',
-    'IN_PROGRESS': 'status-in-progress',
-    'DONE': 'status-done'
-  };
-  
-  const statusText: Record<TaskStatus, string> = {
-    'OPEN': 'To Do',
-    'IN_PROGRESS': 'In Progress',
-    'DONE': 'Done'
-  };
-  
-  const validStatus = (status as TaskStatus) in statusClasses ? (status as TaskStatus) : null;
-  const className = validStatus ? statusClasses[validStatus] : '';
-  const text = validStatus ? statusText[validStatus] : 'Unknown';
-  
-  return <span className={`task-status ${className}`}>{text}</span>;
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'OPEN':
+      return 'default';
+    case 'IN_PROGRESS':
+      return 'processing';
+    case 'DONE':
+      return 'success';
+    default:
+      return 'default';
+  }
 };
 
-const formatDate = (dateString?: string) => {
-  if (!dateString) return null;
-  const date = new Date(dateString);
-  return date.toLocaleDateString();
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'OPEN':
+      return 'To Do';
+    case 'IN_PROGRESS':
+      return 'In Progress';
+    case 'DONE':
+      return 'Done';
+    default:
+      return status;
+  }
 };
 
-const isOverdue = (deadline?: string, status?: string) => {
-  if (!deadline || status === 'DONE') return false;
-  const today = new Date();
-  const deadlineDate = new Date(deadline);
-  return deadlineDate < today;
-};
-
-const formatMoney = (amount?: number) => {
-  if (amount === undefined || amount === null) return '$0.00';
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-};
-
-export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, onDelete, isAdmin }) => {
-  const overdue = isOverdue(task.deadline, task.status);
+const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
+  const isOverdue = task.deadline && !task.completedAt && new Date(task.deadline) < new Date() && task.status !== 'DONE';
   
-  // Prepare action buttons only if user is admin
-  const actionButtons = isAdmin ? [
-    <button key="edit" className="btn" onClick={() => onEdit(task)}>
-      <EditOutlined />
-    </button>,
-    <button key="delete" className="btn btn-danger" onClick={() => onDelete(task.id)}>
-      <DeleteOutlined />
-    </button>
-  ] : [];
-  
+  const menu = (
+    <Menu>
+      {onEdit && (
+        <Menu.Item key="edit" onClick={() => onEdit(task)}>
+          <EditOutlined /> Edit
+        </Menu.Item>
+      )}
+      {onDelete && (
+        <Menu.Item key="delete" onClick={() => onDelete(task.id)} danger>
+          <DeleteOutlined /> Delete
+        </Menu.Item>
+      )}
+    </Menu>
+  );
+
   return (
-    <div className="task-card">
-      <div className="card-header">
-        <Tooltip title={task.title}>
-          <h3 className="task-title">{task.title}</h3>
-        </Tooltip>
-        {getStatusTag(task.status)}
-      </div>
-      
-      <div className="card-body">
-        <FixedParagraph ellipsis={{ rows: 2 }} className="task-description">
-          {task.description}
-        </FixedParagraph>
-        
-        <div className="task-meta">
-          <div className="task-meta-item">
-            <ProjectOutlined />
-            <span>Project: {task.project.name}</span>
-          </div>
+    <Card 
+      size="small" 
+      className={`task-card ${isOverdue ? 'overdue' : ''}`}
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text strong style={{ flex: 1, marginRight: 8 }}>{task.title}</Text>
           
-          {task.deadline && (
-            <div className="task-meta-item">
-              <CalendarOutlined />
-              <span className={overdue ? 'text-danger' : ''}>
-                Deadline: {formatDate(task.deadline)} {overdue && <span className="tag-overdue">Overdue</span>}
-              </span>
-            </div>
+          {(onEdit || onDelete) && (
+            <Dropdown overlay={menu} trigger={['click']}>
+              <Button type="text" icon={<MoreOutlined />} size="small" />
+            </Dropdown>
           )}
-          
-          <div className="task-meta-item">
-            <DollarOutlined />
-            <span>Money Spent: {formatMoney(task.moneySpent)}</span>
-          </div>
         </div>
+      }
+      style={{ marginBottom: 8 }}
+    >
+      <Paragraph ellipsis={{ rows: 2 }}>{task.description}</Paragraph>
+      
+      <div style={{ marginBottom: 8 }}>
+        <Tag color={getStatusColor(task.status)}>{getStatusText(task.status)}</Tag>
         
         {task.assignee && (
-          <div className="task-assignee">
-            <div className="avatar">
-              <UserOutlined />
-            </div>
-            <span>Assigned to: {task.assignee.email}</span>
-          </div>
+          <Tooltip title={`Assigned to: ${task.assignee.email}`}>
+            <Tag color="blue">{task.assignee.email.split('@')[0]}</Tag>
+          </Tooltip>
+        )}
+        
+        {task.milestone && (
+          <Tooltip title={`Milestone: ${task.milestone.name}`}>
+            <Tag color="purple" icon={<FlagOutlined />}>{task.milestone.name}</Tag>
+          </Tooltip>
         )}
       </div>
       
-      {isAdmin && (
-        <div className="card-actions">
-          {actionButtons}
+      {task.deadline && (
+        <div>
+          <Text type={isOverdue ? "danger" : "secondary"} style={{ fontSize: '12px', display: 'flex', alignItems: 'center' }}>
+            <ClockCircleOutlined style={{ marginRight: 4 }} />
+            {isOverdue ? 'Overdue: ' : 'Due: '}
+            {dayjs(task.deadline).format('MMM D, YYYY')}
+          </Text>
         </div>
       )}
-    </div>
+      
+      {task.moneySpent && task.moneySpent > 0 && (
+        <div>
+          <Text type="secondary" style={{ fontSize: '12px' }}>
+            Budget: ${task.moneySpent.toFixed(2)}
+          </Text>
+        </div>
+      )}
+    </Card>
   );
-}; 
+};
+
+export default TaskCard; 

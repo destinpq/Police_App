@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { Project } from '../../project/entities/project.entity';
+import { Milestone } from '../../project/entities/milestone.entity';
 
 @Entity('tasks')
 export class Task {
@@ -33,6 +34,13 @@ export class Task {
 
   @Column()
   project_id: number;
+
+  @ManyToOne(() => Milestone, milestone => milestone.tasks, { nullable: true })
+  @JoinColumn({ name: 'milestone_id' })
+  milestone: Milestone | null;
+
+  @Column({ nullable: true })
+  milestone_id: number | null;
 
   @Column({ nullable: true, type: 'timestamp' })
   deadline: Date | null;

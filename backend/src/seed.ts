@@ -1,56 +1,33 @@
 import { NestFactory } from '@nestjs/core';
+import { Logger } from '@nestjs/common';
+import { getConnection } from 'typeorm';
 import { AppModule } from './app.module';
-import { UserService } from './user/user.service';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './user/entities/user.entity';
-import { ProjectSeed } from './project/seed/project.seed';
-import { TaskSeed } from './tasks/seed/tasks.seed';
+import { DbSeed } from './db-seed';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const userService = app.get(UserService);
-  const userRepository = app.get<Repository<User>>(getRepositoryToken(User));
-  const projectSeed = app.get(ProjectSeed);
-  const taskSeed = app.get(TaskSeed);
+  const logger = new Logger('Seed');
+  logger.log('Starting database seed...');
 
-  console.log('Starting database seeding...');
-
-  // Seed users
-  const users = [
-    { email: 'drakankasha@destinpq.com', password: 'DestinPQ@24225', isAdmin: false },
-    { email: 'pratik@destinpq.com', password: 'DestinPQ@24225', isAdmin: false },
-    { email: 'shauryabansal@destinpq.com', password: 'DestinPQ@24225', isAdmin: false },
-    { email: 'mohitagrwal@destinpq.com', password: 'DestinPQ@24225', isAdmin: false },
-    { email: 'tejaswi.ranganeni@destinpq.com', password: 'DestinPQ@24225', isAdmin: false },
-    { email: 'admin@destinpq.com', password: 'DestinPQ@24225', isAdmin: true },
-  ];
+  // Create a NestJS application context
+  const app = await NestFactory.createApplicationContext(AppModule);
 
   try {
-    // Check if users exist
-    const existingUsers = await userService.findAll();
-    
-    if (existingUsers.length === 0) {
-      console.log('Seeding users...');
-      for (const userData of users) {
-        const user = userRepository.create(userData);
-        await userRepository.save(user);
-      }
-      console.log('Users seeded successfully');
-    } else {
-      console.log('Users already exist in database');
-    }
+    // Get the connection from TypeORM
+    const connection = getConnection();
+    const entityManager = connection.manager;
 
-    // Seed projects
-    await projectSeed.seed();
+    // Initialize the seeder
+    const seeder = new DbSeed(entityManager);
     
-    // Seed tasks
-    await taskSeed.seed();
+    // Run the seed
+    await seeder.seed();
 
-    console.log('Database seeding completed');
+    logger.log('Database seeding completed successfully!');
   } catch (error) {
-    console.error('Error during database seeding:', error);
+    logger.error('Error during database seeding!');
+    console.error(error);
   } finally {
+    // Close the application
     await app.close();
   }
 }

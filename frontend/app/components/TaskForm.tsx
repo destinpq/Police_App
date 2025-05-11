@@ -5,8 +5,10 @@ import { Form, Input, Button, Select, DatePicker, Spin, notification, InputNumbe
 import { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
 import { User } from '../types/user';
 import { Project } from '../types/project';
+import { Milestone } from '../types/milestone';
 import { UserService } from '../services/UserService';
 import { ProjectService } from '../services/ProjectService';
+import { MilestoneService } from '../services/MilestoneService';
 import { SendOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -28,6 +30,7 @@ interface TaskFormValues {
   status?: 'OPEN' | 'IN_PROGRESS' | 'DONE';
   assignee_id?: number;
   project_id: number;
+  milestone_id?: number;
   deadline?: dayjs.Dayjs | null;
   moneySpent?: number;
 }
@@ -37,8 +40,10 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onSubmit, onCancel, isAdmin 
   const isEditing = !!task;
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(task?.project_id);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +66,24 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onSubmit, onCancel, isAdmin 
   }, []);
 
   useEffect(() => {
+    const fetchMilestones = async () => {
+      if (!selectedProjectId) return;
+      
+      try {
+        setLoading(true);
+        const projectMilestones = await MilestoneService.getMilestonesByProject(selectedProjectId);
+        setMilestones(projectMilestones);
+      } catch (error) {
+        console.error('Failed to fetch milestones:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMilestones();
+  }, [selectedProjectId]);
+
+  useEffect(() => {
     if (task) {
       // Convert string date to dayjs object for the DatePicker
       const formData = {
@@ -69,10 +92,16 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onSubmit, onCancel, isAdmin 
         deadline: task.deadline ? dayjs(task.deadline) : null,
       };
       form.setFieldsValue(formData);
+      setSelectedProjectId(task.project_id);
     } else {
       form.resetFields();
     }
   }, [task, form]);
+
+  const handleProjectChange = (projectId: number) => {
+    setSelectedProjectId(projectId);
+    form.setFieldValue('milestone_id', undefined);
+  };
 
   const handleSubmit = async (values: TaskFormValues) => {
     try {
@@ -160,10 +189,29 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onSubmit, onCancel, isAdmin 
           <Select 
             placeholder="Select a project" 
             loading={loading}
+            onChange={handleProjectChange}
           >
             {projects.map(project => (
               <Option key={project.id} value={project.id}>
                 {project.name}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          name="milestone_id"
+          label="Milestone"
+        >
+          <Select 
+            placeholder="Select a milestone" 
+            allowClear
+            loading={loading}
+            disabled={!selectedProjectId}
+          >
+            {milestones.map(milestone => (
+              <Option key={milestone.id} value={milestone.id}>
+                {milestone.name}
               </Option>
             ))}
           </Select>

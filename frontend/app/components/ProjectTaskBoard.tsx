@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Button, Drawer, message, Empty } from 'antd';
+import { Row, Col, Button, Drawer, message, Empty, Tabs } from 'antd';
 import { TaskService } from '../services/TaskService';
 import { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
 import { Project } from '../types/project';
@@ -10,7 +10,10 @@ import { TaskForm } from './TaskForm';
 import ProjectList from './ProjectList';
 import ProjectForm from './ProjectForm';
 import ProjectBudgetManager from './ProjectBudgetManager';
+import MilestoneList from './MilestoneList';
 import { ProjectService } from '../services/ProjectService';
+
+const { TabPane } = Tabs;
 
 interface ProjectTaskBoardProps {
   currentUser: {
@@ -28,6 +31,7 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
   const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(undefined);
   const [projectListUpdated, setProjectListUpdated] = useState<boolean>(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('tasks');
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -133,6 +137,11 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
     setProjectListUpdated(prev => !prev);
   };
 
+  const handleMilestoneUpdated = () => {
+    // Refresh tasks to reflect milestone changes
+    fetchTasks();
+  };
+
   return (
     <div className="project-task-board">
       <Row gutter={[16, 16]}>
@@ -157,11 +166,11 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
             <h2>
               {selectedProjectId 
-                ? `Tasks for ${tasks.length > 0 && tasks[0].project ? tasks[0].project.name : (selectedProject ? selectedProject.name : 'Project')}`
+                ? `Project: ${tasks.length > 0 && tasks[0].project ? tasks[0].project.name : (selectedProject ? selectedProject.name : 'Project')}`
                 : 'All Tasks'
               }
             </h2>
-            {currentUser.isAdmin && (
+            {currentUser.isAdmin && selectedProjectId && (
               <Button type="primary" onClick={handleCreateTask}>
                 Create Task
               </Button>
@@ -180,22 +189,45 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
               )}
             </div>
           )}
-          
-          {!selectedProjectId && !loading && tasks.length === 0 && (
-            <Empty 
-              description="No tasks available. Select a project or create a new task."
-              style={{ margin: '40px 0' }}
-            />
-          )}
 
-          <TaskBoard 
-            tasks={tasks}
-            loading={loading}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-            refreshTasks={fetchTasks}
-            isAdmin={currentUser.isAdmin}
-          />
+          {selectedProjectId ? (
+            <Tabs activeKey={activeTab} onChange={setActiveTab}>
+              <TabPane tab="Tasks" key="tasks">
+                <TaskBoard 
+                  tasks={tasks}
+                  loading={loading}
+                  onEditTask={handleEditTask}
+                  onDeleteTask={handleDeleteTask}
+                  refreshTasks={fetchTasks}
+                  isAdmin={currentUser.isAdmin}
+                />
+              </TabPane>
+              <TabPane tab="Milestones" key="milestones">
+                <MilestoneList
+                  projectId={selectedProjectId}
+                  isAdmin={currentUser.isAdmin}
+                />
+              </TabPane>
+            </Tabs>
+          ) : (
+            <>
+              {!loading && tasks.length === 0 ? (
+                <Empty 
+                  description="No tasks available. Select a project or create a new task."
+                  style={{ margin: '40px 0' }}
+                />
+              ) : (
+                <TaskBoard 
+                  tasks={tasks}
+                  loading={loading}
+                  onEditTask={handleEditTask}
+                  onDeleteTask={handleDeleteTask}
+                  refreshTasks={fetchTasks}
+                  isAdmin={currentUser.isAdmin}
+                />
+              )}
+            </>
+          )}
         </Col>
       </Row>
 
