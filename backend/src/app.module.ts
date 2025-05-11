@@ -11,6 +11,7 @@ import { Task } from './tasks/entities/task.entity';
 import { NotificationModule } from './notification/notification.module';
 import { ProjectModule } from './project/project.module';
 import { Project } from './project/entities/project.entity';
+import { Milestone } from './project/entities/milestone.entity';
 import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AccuracyRating } from './analytics/entities/accuracy-rating.entity';
@@ -30,6 +31,7 @@ import { ProjectStats } from './analytics/entities/project-stats.entity';
           User,
           Task,
           Project,
+          Milestone,
           AccuracyRating,
           UserStats,
           ProjectStats,
