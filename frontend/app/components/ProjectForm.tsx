@@ -1,140 +1,165 @@
-import React, { useState } from 'react';
+'use client';
+
+import { useState } from 'react';
+import { Button, Form, Input, Select, InputNumber, Modal, message } from 'antd';
 import { CreateProjectDto } from '../types/project';
 import { ProjectService } from '../services/ProjectService';
-import { Form, Input, Button, Select, Card, message, InputNumber, Divider } from 'antd';
-import { PlusOutlined, DollarOutlined } from '@ant-design/icons';
+import { useBreakpoint } from '../utils/responsive';
 
 const { TextArea } = Input;
 const { Option } = Select;
 
-const CURRENCIES = [
-  { value: 'USD', label: 'USD ($)', symbol: '$' },
-  { value: 'EUR', label: 'EUR (€)', symbol: '€' },
-  { value: 'GBP', label: 'GBP (£)', symbol: '£' },
-  { value: 'INR', label: 'INR (₹)', symbol: '₹' },
-  { value: 'JPY', label: 'JPY (¥)', symbol: '¥' },
-];
+// Helper function for InputNumber parser
+const parseAmount = (value: string | undefined): number => {
+  if (!value) return 0;
+  const parsedValue = value.replace(/\$\s?|(,*)/g, '');
+  return parseFloat(parsedValue) || 0;
+};
 
 interface ProjectFormProps {
-  onProjectAdded: (project?: CreateProjectDto) => void;
-  currentUser: { isAdmin: boolean };
+  onProjectAdded: () => void;
+  currentUser: {
+    id: number;
+    email: string;
+    isAdmin: boolean;
+  };
 }
 
-const ProjectForm: React.FC<ProjectFormProps> = ({ onProjectAdded, currentUser }) => {
+const ProjectForm = ({ onProjectAdded, currentUser }: ProjectFormProps) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { isMobile } = useBreakpoint();
 
-  const handleSubmit = async (values: {
-    name: string;
-    description: string;
-    budgetCurrency?: string;
-    budget?: number;
-    budgetSpent?: number;
-  }) => {
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    form.resetFields();
+    setIsModalVisible(false);
+  };
+
+  const handleSubmit = async (values: CreateProjectDto) => {
+    if (!currentUser.isAdmin) {
+      message.error('Only administrators can create projects');
+      return;
+    }
+
     try {
-      setLoading(true);
-      
-      // Create the project DTO
-      const projectDto: CreateProjectDto = values;
-      
-      const createdProject = await ProjectService.createProject(projectDto);
-      message.success(`Project "${createdProject.name}" created successfully!`);
+      setIsSubmitting(true);
+      await ProjectService.createProject(values);
+      message.success('Project created successfully');
       form.resetFields();
-      if (onProjectAdded) {
-        onProjectAdded(createdProject);
-      }
+      setIsModalVisible(false);
+      onProjectAdded();
     } catch (error) {
       console.error('Failed to create project:', error);
       message.error('Failed to create project. Please try again.');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  // Only render the form if user is admin
-  if (!currentUser || !currentUser.isAdmin) {
-    return null;
-  }
-
   return (
-    <Card title="Add New Project" className="project-form">
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        initialValues={{
-          budgetCurrency: 'USD',
-          budgetSpent: 0
-        }}
+    <>
+      <Button 
+        type="primary" 
+        onClick={showModal} 
+        style={{ width: '100%', marginTop: '20px' }}
+        size={isMobile ? 'middle' : 'large'}
       >
-        <Form.Item
-          name="name"
-          label="Project Name"
-          rules={[{ required: true, message: 'Please enter a project name' }]}
+        Create New Project
+      </Button>
+
+      <Modal
+        title="Create New Project"
+        visible={isModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+        width={isMobile ? '95%' : 520}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmit}
+          initialValues={{
+            currency: 'USD',
+          }}
         >
-          <Input placeholder="Enter project name" />
-        </Form.Item>
-        
-        <Form.Item
-          name="description"
-          label="Description"
-          rules={[{ required: true, message: 'Please enter a project description' }]}
-        >
-          <TextArea 
-            placeholder="Enter project description" 
-            rows={4} 
-          />
-        </Form.Item>
-        
-        <Divider>Budget Information</Divider>
-        
-        <Form.Item
-          name="budgetCurrency"
-          label="Currency"
-        >
-          <Select>
-            {CURRENCIES.map(currency => (
-              <Option key={currency.value} value={currency.value}>{currency.label}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-        
-        <Form.Item
-          name="budget"
-          label="Total Budget"
-        >
-          <InputNumber 
-            style={{ width: '100%' }} 
-            min={0}
-            step={1000}
-            prefix={<DollarOutlined />}
-          />
-        </Form.Item>
-        
-        <Form.Item
-          name="budgetSpent"
-          label="Budget Spent"
-        >
-          <InputNumber 
-            style={{ width: '100%' }} 
-            min={0}
-            step={500}
-            prefix={<DollarOutlined />}
-          />
-        </Form.Item>
-        
-        <Form.Item>
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            loading={loading}
-            icon={<PlusOutlined />}
+          <Form.Item
+            name="name"
+            label="Project Name"
+            rules={[{ required: true, message: 'Please enter a project name' }]}
           >
-            Add Project
-          </Button>
-        </Form.Item>
-      </Form>
-    </Card>
+            <Input placeholder="Enter project name" />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="Description"
+            rules={[{ required: true, message: 'Please enter a description' }]}
+          >
+            <TextArea
+              placeholder="Enter project description"
+              autoSize={{ minRows: 3, maxRows: 6 }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="budgetCurrency"
+            label="Currency"
+          >
+            <Select defaultValue="USD">
+              <Option value="USD">USD ($)</Option>
+              <Option value="EUR">EUR (€)</Option>
+              <Option value="GBP">GBP (£)</Option>
+              <Option value="CAD">CAD (C$)</Option>
+              <Option value="AUD">AUD (A$)</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="budget"
+            label="Budget"
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              min={0}
+              step={100}
+              placeholder="Enter budget amount"
+              formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={parseAmount}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="budgetSpent"
+            label="Budget Spent"
+            initialValue={0}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              min={0}
+              step={100}
+              placeholder="Enter amount spent"
+              formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={parseAmount}
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <Button onClick={handleCancel}>Cancel</Button>
+              <Button type="primary" htmlType="submit" loading={isSubmitting}>
+                Create Project
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 };
 

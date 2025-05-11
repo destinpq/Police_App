@@ -1,0 +1,198 @@
+/* Responsive CSS helper classes */
+
+/* Mobile-first media queries */
+:root {
+  --xs-breakpoint: 480px;
+  --sm-breakpoint: 576px;
+  --md-breakpoint: 768px;
+  --lg-breakpoint: 992px;
+  --xl-breakpoint: 1200px;
+  --xxl-breakpoint: 1600px;
+}
+
+/* Hide elements based on screen sizes */
+.hide-xs {
+  display: block;
+}
+
+.show-xs {
+  display: none;
+}
+
+/* Text sizes for different screens */
+.responsive-h1 {
+  font-size: 1.5rem; /* Default for small screens */
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.responsive-h2 {
+  font-size: 1.25rem; /* Default for small screens */
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.responsive-h3 {
+  font-size: 1.1rem; /* Default for small screens */
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.responsive-text {
+  font-size: 0.9rem; /* Default for small screens */
+  line-height: 1.4;
+}
+
+/* Padding and margin utilities */
+.responsive-padding {
+  padding: 10px; /* Default for small screens */
+}
+
+.responsive-margin {
+  margin: 10px; /* Default for small screens */
+}
+
+/* Flexbox helpers */
+.responsive-flex {
+  display: flex;
+  flex-direction: column; /* Default for small screens */
+}
+
+/* Media queries for responsive adjustments */
+@media (max-width: 576px) {
+  .hide-sm-down {
+    display: none !important;
+  }
+  
+  .responsive-padding {
+    padding: 8px;
+  }
+  
+  .responsive-margin {
+    margin: 8px;
+  }
+}
+
+@media (min-width: 577px) {
+  .show-xs {
+    display: none;
+  }
+  
+  .responsive-h1 {
+    font-size: 1.8rem;
+  }
+  
+  .responsive-h2 {
+    font-size: 1.5rem;
+  }
+  
+  .responsive-h3 {
+    font-size: 1.25rem;
+  }
+  
+  .responsive-text {
+    font-size: 1rem;
+  }
+  
+  .responsive-padding {
+    padding: 15px;
+  }
+  
+  .responsive-margin {
+    margin: 15px;
+  }
+  
+  .responsive-flex {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 768px) {
+  .hide-md-up {
+    display: none !important;
+  }
+  
+  .responsive-h1 {
+    font-size: 2rem;
+  }
+  
+  .responsive-h2 {
+    font-size: 1.75rem;
+  }
+  
+  .responsive-padding {
+    padding: 20px;
+  }
+  
+  .responsive-margin {
+    margin: 20px;
+  }
+}
+
+@media (min-width: 992px) {
+  .responsive-h1 {
+    font-size: 2.5rem;
+  }
+  
+  .responsive-padding {
+    padding: 25px;
+  }
+  
+  .responsive-margin {
+    margin: 25px;
+  }
+}
+
+/* Container width for different screen sizes */
+.responsive-container {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 576px) {
+  .responsive-container {
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-container {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .responsive-container {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .responsive-container {
+    max-width: 1140px;
+  }
+}
+
+/* Grid system */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* Default for mobile: 4 columns */
+  gap: 10px;
+}
+
+@media (min-width: 576px) {
+  .responsive-grid {
+    grid-template-columns: repeat(8, 1fr); /* Tablet: 8 columns */
+    gap: 15px;
+  }
+}
+
+@media (min-width: 992px) {
+  .responsive-grid {
+    grid-template-columns: repeat(12, 1fr); /* Desktop: 12 columns */
+    gap: 20px;
+  }
+} 

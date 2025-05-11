@@ -1,4 +1,5 @@
 import './globals.css';
+import './styles/responsive.css';
 import type { Metadata } from 'next';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { ConfigProvider, App } from 'antd';

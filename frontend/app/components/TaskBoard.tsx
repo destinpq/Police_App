@@ -6,6 +6,7 @@ import { Empty, Spin } from 'antd';
 import { TaskService } from '../services/TaskService';
 import { Task } from '../types/task';
 import TaskCard from './TaskCard';
+import { useBreakpoint } from '../utils/responsive';
 
 interface TaskBoardProps {
   onEditTask: (task: Task) => void;
@@ -13,15 +14,17 @@ interface TaskBoardProps {
   tasks: Task[];
   loading: boolean;
   refreshTasks: () => void;
-  isAdmin: boolean;
 }
 
-export const TaskBoard = ({ onEditTask, onDeleteTask, tasks, loading, refreshTasks, isAdmin }: TaskBoardProps) => {
+export const TaskBoard = ({ onEditTask, onDeleteTask, tasks, loading, refreshTasks }: TaskBoardProps) => {
   const [columns, setColumns] = useState({
     'OPEN': [] as Task[],
     'IN_PROGRESS': [] as Task[],
     'DONE': [] as Task[],
   });
+  
+  // Get current breakpoint information
+  const { isMobile, isTablet } = useBreakpoint();
 
   // Group tasks by status
   useEffect(() => {
@@ -94,6 +97,45 @@ export const TaskBoard = ({ onEditTask, onDeleteTask, tasks, loading, refreshTas
     }
   };
 
+  // Responsive styles based on screen size
+  const getColumnContainerStyles = () => {
+    if (isMobile) {
+      // For mobile, stack columns vertically
+      return {
+        flexDirection: 'column',
+        gap: '15px',
+      } as const;
+    } else {
+      // For tablet and desktop, keep columns side by side
+      return {
+        flexDirection: 'row',
+        gap: isTablet ? '10px' : '20px',
+      } as const;
+    }
+  };
+
+  const getColumnStyles = () => {
+    if (isMobile) {
+      // Full width columns for mobile
+      return {
+        width: '100%',
+        minWidth: 'auto',
+      };
+    } else if (isTablet) {
+      // Equal width columns for tablet
+      return {
+        flex: 1,
+        minWidth: '200px',
+      };
+    } else {
+      // Fixed width columns for desktop
+      return {
+        flex: 1,
+        minWidth: '250px',
+      };
+    }
+  };
+
   return (
     <div className="task-board">
       {loading ? (
@@ -103,12 +145,58 @@ export const TaskBoard = ({ onEditTask, onDeleteTask, tasks, loading, refreshTas
         </div>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="board-columns">
+          <div 
+            className="board-columns"
+            style={{
+              display: 'flex',
+              ...getColumnContainerStyles(),
+            }}
+          >
             {Object.entries(columns).map(([status, taskList]) => (
-              <div key={status} className={`task-column column-${status.toLowerCase()}`}>
-                <div className="column-header">
-                  <span className={`column-badge ${status.toLowerCase()}`}>{taskList.length}</span>
-                  <span className="column-title">
+              <div 
+                key={status} 
+                className={`task-column column-${status.toLowerCase()}`}
+                style={{
+                  ...getColumnStyles(),
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '4px',
+                  padding: '10px',
+                }}
+              >
+                <div 
+                  className="column-header"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginBottom: '10px',
+                    padding: '5px 0',
+                    borderBottom: '1px solid #e8e8e8',
+                  }}
+                >
+                  <span 
+                    className={`column-badge ${status.toLowerCase()}`}
+                    style={{
+                      display: 'inline-block',
+                      width: '24px',
+                      height: '24px',
+                      lineHeight: '24px',
+                      textAlign: 'center',
+                      borderRadius: '50%',
+                      background: status === 'OPEN' ? '#d9d9d9' : status === 'IN_PROGRESS' ? '#1677ff' : '#52c41a',
+                      color: status === 'OPEN' ? '#000' : '#fff',
+                      marginRight: '8px',
+                      fontSize: '12px',
+                    }}
+                  >
+                    {taskList.length}
+                  </span>
+                  <span 
+                    className="column-title"
+                    style={{
+                      fontWeight: 500,
+                      fontSize: isMobile ? '14px' : '16px',
+                    }}
+                  >
                     {status === 'OPEN' ? 'To Do' : status === 'IN_PROGRESS' ? 'In Progress' : 'Done'}
                   </span>
                 </div>
@@ -118,6 +206,14 @@ export const TaskBoard = ({ onEditTask, onDeleteTask, tasks, loading, refreshTas
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={`column-content ${snapshot.isDraggingOver ? 'is-dragging-over' : ''}`}
+                      style={{
+                        minHeight: '50px',
+                        maxHeight: isMobile ? '400px' : '600px',
+                        overflowY: 'auto',
+                        backgroundColor: snapshot.isDraggingOver ? '#e6f7ff' : 'transparent',
+                        borderRadius: '4px',
+                        padding: '5px',
+                      }}
                     >
                       {taskList.length === 0 ? (
                         <Empty 
@@ -145,7 +241,6 @@ export const TaskBoard = ({ onEditTask, onDeleteTask, tasks, loading, refreshTas
                                   task={task} 
                                   onEdit={onEditTask} 
                                   onDelete={onDeleteTask}
-                                  isAdmin={isAdmin}
                                 />
                               </div>
                             )}

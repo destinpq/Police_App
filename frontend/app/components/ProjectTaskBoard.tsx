@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Button, Drawer, message, Empty, Tabs } from 'antd';
+import { MenuOutlined } from '@ant-design/icons';
 import { TaskService } from '../services/TaskService';
 import { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
 import { Project } from '../types/project';
@@ -12,6 +13,7 @@ import ProjectForm from './ProjectForm';
 import ProjectBudgetManager from './ProjectBudgetManager';
 import MilestoneList from './MilestoneList';
 import { ProjectService } from '../services/ProjectService';
+import { useBreakpoint } from '../utils/responsive';
 
 const { TabPane } = Tabs;
 
@@ -32,6 +34,10 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
   const [projectListUpdated, setProjectListUpdated] = useState<boolean>(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [activeTab, setActiveTab] = useState<string>('tasks');
+  const [showProjectDrawer, setShowProjectDrawer] = useState<boolean>(false);
+  
+  // Get current breakpoint information
+  const { isMobile, isTablet } = useBreakpoint();
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -79,6 +85,10 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
 
   const handleProjectSelect = (projectId: number) => {
     setSelectedProjectId(projectId === 0 ? undefined : projectId);
+    // On mobile, close the project drawer after selection
+    if (isMobile || isTablet) {
+      setShowProjectDrawer(false);
+    }
   };
 
   const handleCreateTask = () => {
@@ -137,41 +147,95 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
     setProjectListUpdated(prev => !prev);
   };
 
+  // Project list to show in sidebar or drawer
+  const ProjectListComponent = (
+    <div style={{ marginBottom: '20px' }}>
+      <ProjectList 
+        onSelectProject={handleProjectSelect} 
+        selectedProjectId={selectedProjectId}
+        isAdmin={currentUser.isAdmin}
+        onProjectUpdated={handleProjectUpdated}
+      />
+      {currentUser.isAdmin && (
+        <ProjectForm 
+          onProjectAdded={handleProjectAdded} 
+          currentUser={currentUser}
+        />
+      )}
+    </div>
+  );
+
+  // Responsive drawer width for forms
+  const drawerWidth = isMobile ? '100%' : isTablet ? '70%' : 500;
+
   return (
     <div className="project-task-board">
-      <Row gutter={[16, 16]}>
-        <Col span={6}>
-          <div style={{ marginBottom: '20px' }}>
-            <ProjectList 
-              onSelectProject={handleProjectSelect} 
-              selectedProjectId={selectedProjectId}
-              isAdmin={currentUser.isAdmin}
-              onProjectUpdated={handleProjectUpdated}
-            />
-            {currentUser.isAdmin && (
-              <ProjectForm 
-                onProjectAdded={handleProjectAdded} 
-                currentUser={currentUser}
-              />
-            )}
-          </div>
-        </Col>
+      {/* Project drawer toggle for mobile and tablet */}
+      {(isMobile || isTablet) && (
+        <div 
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            marginBottom: '15px', 
+            alignItems: 'center',
+            padding: '0 5px'
+          }}
+        >
+          <Button 
+            icon={<MenuOutlined />} 
+            onClick={() => setShowProjectDrawer(true)}
+            style={{ marginRight: '10px' }}
+          >
+            Projects
+          </Button>
+          <h2 style={{ margin: 0, fontSize: isMobile ? '18px' : '24px' }}>
+            {selectedProjectId 
+              ? tasks.length > 0 && tasks[0].project 
+                ? tasks[0].project.name 
+                : (selectedProject ? selectedProject.name : 'Project')
+              : 'All Tasks'
+            }
+          </h2>
+        </div>
+      )}
 
-        <Col span={18}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
-            <h2>
-              {selectedProjectId 
-                ? `Project: ${tasks.length > 0 && tasks[0].project ? tasks[0].project.name : (selectedProject ? selectedProject.name : 'Project')}`
-                : 'All Tasks'
-              }
-            </h2>
-            {currentUser.isAdmin && selectedProjectId && (
+      <Row gutter={[16, 16]}>
+        {/* Project list column - only visible on desktop */}
+        {!isMobile && !isTablet && (
+          <Col span={6}>
+            {ProjectListComponent}
+          </Col>
+        )}
+
+        {/* Main content column */}
+        <Col span={isMobile || isTablet ? 24 : 18}>
+          {/* Header with project title and create button - only for desktop */}
+          {!isMobile && !isTablet && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
+              <h2>
+                {selectedProjectId 
+                  ? `Project: ${tasks.length > 0 && tasks[0].project ? tasks[0].project.name : (selectedProject ? selectedProject.name : 'Project')}`
+                  : 'All Tasks'
+                }
+              </h2>
+              {currentUser.isAdmin && selectedProjectId && (
+                <Button type="primary" onClick={handleCreateTask}>
+                  Create Task
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Mobile create task button */}
+          {(isMobile || isTablet) && currentUser.isAdmin && selectedProjectId && (
+            <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-end' }}>
               <Button type="primary" onClick={handleCreateTask}>
                 Create Task
               </Button>
-            )}
-          </div>
+            </div>
+          )}
           
+          {/* Project budget section */}
           {selectedProject && (
             <div style={{ marginBottom: '20px' }}>
               {currentUser.isAdmin && (
@@ -185,8 +249,13 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
             </div>
           )}
 
+          {/* Tabs for Tasks and Milestones */}
           {selectedProjectId ? (
-            <Tabs activeKey={activeTab} onChange={setActiveTab}>
+            <Tabs 
+              activeKey={activeTab} 
+              onChange={setActiveTab}
+              size={isMobile ? "small" : "middle"}
+            >
               <TabPane tab="Tasks" key="tasks">
                 <TaskBoard 
                   tasks={tasks}
@@ -226,10 +295,22 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
         </Col>
       </Row>
 
+      {/* Drawer for projects on mobile/tablet */}
+      <Drawer
+        title="Projects"
+        placement="left"
+        width={isMobile ? '80%' : '50%'}
+        onClose={() => setShowProjectDrawer(false)}
+        open={showProjectDrawer}
+      >
+        {ProjectListComponent}
+      </Drawer>
+
+      {/* Task form drawer */}
       <Drawer
         title={selectedTask ? 'Edit Task' : 'Create Task'}
         placement="right"
-        width={500}
+        width={drawerWidth}
         onClose={() => setShowTaskForm(false)}
         open={showTaskForm}
       >
