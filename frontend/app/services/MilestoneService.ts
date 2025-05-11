@@ -1,15 +1,11 @@
 import { Milestone, CreateMilestoneDto, UpdateMilestoneDto } from '../types/milestone';
+import { getAuthHeaders } from './AuthService';
 import { API_BASE_URL } from '../config';
 
 export class MilestoneService {
   static async getAllMilestones(): Promise<Milestone[]> {
-    const response = await fetch(`${API_BASE_URL}/milestones`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const options = getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/milestones`, options);
 
     if (!response.ok) {
       throw new Error('Failed to fetch milestones');
@@ -19,13 +15,8 @@ export class MilestoneService {
   }
 
   static async getMilestonesByProject(projectId: number): Promise<Milestone[]> {
-    const response = await fetch(`${API_BASE_URL}/milestones/project/${projectId}`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const options = getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/milestones/project/${projectId}`, options);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch milestones for project ${projectId}`);
@@ -35,13 +26,8 @@ export class MilestoneService {
   }
 
   static async getMilestoneById(id: number): Promise<Milestone> {
-    const response = await fetch(`${API_BASE_URL}/milestones/${id}`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const options = getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/milestones/${id}`, options);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch milestone with ID ${id}`);
@@ -51,12 +37,10 @@ export class MilestoneService {
   }
 
   static async createMilestone(milestone: CreateMilestoneDto): Promise<Milestone> {
+    const options = getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/milestones`, {
+      ...options,
       method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(milestone),
     });
 
@@ -68,12 +52,10 @@ export class MilestoneService {
   }
 
   static async updateMilestone(id: number, milestone: UpdateMilestoneDto): Promise<Milestone> {
+    const options = getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/milestones/${id}`, {
+      ...options,
       method: 'PUT',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(milestone),
     });
 
@@ -85,12 +67,10 @@ export class MilestoneService {
   }
 
   static async deleteMilestone(id: number): Promise<void> {
+    const options = getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/milestones/${id}`, {
+      ...options,
       method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     if (!response.ok) {
@@ -99,12 +79,10 @@ export class MilestoneService {
   }
 
   static async updateMilestoneStatus(id: number): Promise<Milestone> {
+    const options = getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/milestones/${id}/update-status`, {
+      ...options,
       method: 'PUT',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     if (!response.ok) {
