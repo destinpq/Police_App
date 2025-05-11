@@ -14,9 +14,10 @@ interface TaskBoardProps {
   tasks: Task[];
   loading: boolean;
   refreshTasks: () => void;
+  isAdmin?: boolean;
 }
 
-export const TaskBoard = ({ onEditTask, onDeleteTask, tasks, loading, refreshTasks }: TaskBoardProps) => {
+export const TaskBoard = ({ onEditTask, onDeleteTask, tasks, loading, refreshTasks, isAdmin }: TaskBoardProps) => {
   const [columns, setColumns] = useState({
     'OPEN': [] as Task[],
     'IN_PROGRESS': [] as Task[],
@@ -241,6 +242,7 @@ export const TaskBoard = ({ onEditTask, onDeleteTask, tasks, loading, refreshTas
                                   task={task} 
                                   onEdit={onEditTask} 
                                   onDelete={onDeleteTask}
+                                  isAdmin={isAdmin}
                                 />
                               </div>
                             )}

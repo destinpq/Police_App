@@ -13,6 +13,7 @@ interface TaskCardProps {
   task: Task;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: number) => void;
+  isAdmin?: boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -41,18 +42,18 @@ const getStatusText = (status: string) => {
   }
 };
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, isAdmin }) => {
   const isOverdue = task.deadline && !task.completedAt && new Date(task.deadline) < new Date() && task.status !== 'DONE';
   const { isMobile } = useBreakpoint();
   
   const menu = (
     <Menu>
-      {onEdit && (
+      {onEdit && isAdmin && (
         <Menu.Item key="edit" onClick={() => onEdit(task)}>
           <EditOutlined /> Edit
         </Menu.Item>
       )}
-      {onDelete && (
+      {onDelete && isAdmin && (
         <Menu.Item key="delete" onClick={() => onDelete(task.id)} danger>
           <DeleteOutlined /> Delete
         </Menu.Item>
@@ -81,7 +82,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
             {task.title}
           </Text>
           
-          {(onEdit || onDelete) && (
+          {(onEdit || onDelete) && isAdmin && (
             <Dropdown overlay={menu} trigger={['click']}>
               <Button type="text" icon={<MoreOutlined />} size="small" />
             </Dropdown>
