@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { List, Card, Button, Drawer, Spin, Tag, Empty, Modal, message, Progress } from 'antd';
 import { EditOutlined, DeleteOutlined, CalendarOutlined } from '@ant-design/icons';
-import { Milestone } from '../types/milestone';
+import { Milestone, CreateMilestoneDto, UpdateMilestoneDto } from '../types/milestone';
 import { MilestoneService } from '../services/MilestoneService';
 import MilestoneForm from './MilestoneForm';
 import dayjs from 'dayjs';
@@ -22,7 +22,7 @@ const MilestoneList = ({ projectId, isAdmin }: MilestoneListProps) => {
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [milestoneToDelete, setMilestoneToDelete] = useState<number | null>(null);
 
-  const fetchMilestones = async () => {
+  const fetchMilestones = useCallback(async () => {
     if (!projectId) return;
     
     try {
@@ -35,11 +35,11 @@ const MilestoneList = ({ projectId, isAdmin }: MilestoneListProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
     fetchMilestones();
-  }, [projectId]);
+  }, [fetchMilestones]);
 
   const handleCreateMilestone = () => {
     setSelectedMilestone(undefined);
@@ -51,13 +51,13 @@ const MilestoneList = ({ projectId, isAdmin }: MilestoneListProps) => {
     setShowMilestoneForm(true);
   };
 
-  const handleMilestoneFormSubmit = async (milestoneData: any) => {
+  const handleMilestoneFormSubmit = async (milestoneData: CreateMilestoneDto | UpdateMilestoneDto) => {
     try {
       if (selectedMilestone) {
-        await MilestoneService.updateMilestone(selectedMilestone.id, milestoneData);
+        await MilestoneService.updateMilestone(selectedMilestone.id, milestoneData as UpdateMilestoneDto);
         message.success('Milestone updated successfully');
       } else {
-        await MilestoneService.createMilestone(milestoneData);
+        await MilestoneService.createMilestone(milestoneData as CreateMilestoneDto);
         message.success('Milestone created successfully');
       }
       setShowMilestoneForm(false);

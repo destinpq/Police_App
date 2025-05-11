@@ -5,7 +5,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { Empty, Spin } from 'antd';
 import { TaskService } from '../services/TaskService';
 import { Task } from '../types/task';
-import { TaskCard } from './TaskCard';
+import TaskCard from './TaskCard';
 
 interface TaskBoardProps {
   onEditTask: (task: Task) => void;

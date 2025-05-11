@@ -12,6 +12,7 @@ interface TaskCardProps {
   task: Task;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: number) => void;
+  isAdmin?: boolean;
 }
 
 const getStatusColor = (status: string) => {

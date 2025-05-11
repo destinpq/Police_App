@@ -596,12 +596,12 @@ export class DbSeed {
         continue;
       }
 
-      let milestone = null;
+      let milestone: Milestone | null = null;
       if (taskData.milestoneIndex !== undefined && milestones[taskData.milestoneIndex]) {
         milestone = milestones[taskData.milestoneIndex];
       }
 
-      let assignee = null;
+      let assignee: User | null = null;
       if (taskData.assigneeIndex !== undefined && users[taskData.assigneeIndex]) {
         assignee = users[taskData.assigneeIndex];
       }
@@ -611,11 +611,11 @@ export class DbSeed {
         description: taskData.description,
         status: taskData.status,
         assignee: assignee,
-        assignee_id: assignee?.id,
+        assignee_id: assignee ? assignee.id : null,
         project: project,
         project_id: project.id,
         milestone: milestone,
-        milestone_id: milestone?.id,
+        milestone_id: milestone ? milestone.id : null,
         deadline: taskData.deadline,
         moneySpent: taskData.moneySpent || 0,
         completedAt: taskData.status === 'DONE' ? new Date() : null,

@@ -137,11 +137,6 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
     setProjectListUpdated(prev => !prev);
   };
 
-  const handleMilestoneUpdated = () => {
-    // Refresh tasks to reflect milestone changes
-    fetchTasks();
-  };
-
   return (
     <div className="project-task-board">
       <Row gutter={[16, 16]}>

@@ -5,6 +5,11 @@ import { Form, Input, Button, DatePicker, Select, message } from 'antd';
 import { Milestone, CreateMilestoneDto, UpdateMilestoneDto } from '../types/milestone';
 import dayjs from 'dayjs';
 
+// Extended type for form values with dayjs
+interface MilestoneFormValues extends Omit<CreateMilestoneDto | UpdateMilestoneDto, 'deadline'> {
+  deadline?: dayjs.Dayjs;
+}
+
 const { TextArea } = Input;
 const { Option } = Select;
 
@@ -33,7 +38,7 @@ const MilestoneForm = ({ milestone, projectId, onSubmit, onCancel }: MilestoneFo
     }
   }, [milestone, projectId, form]);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: MilestoneFormValues) => {
     try {
       setSubmitting(true);
       const milestoneData: CreateMilestoneDto | UpdateMilestoneDto = {
@@ -43,7 +48,7 @@ const MilestoneForm = ({ milestone, projectId, onSubmit, onCancel }: MilestoneFo
       };
 
       if (milestone?.id) {
-        await onSubmit({ id: milestone.id, ...milestoneData });
+        await onSubmit({ id: milestone.id, ...milestoneData } as UpdateMilestoneDto);
       } else {
         await onSubmit(milestoneData as CreateMilestoneDto);
       }

@@ -2,6 +2,7 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { User } from '../user/entities/user.entity';
 import { Project } from '../project/entities/project.entity';
+import { Task } from '../tasks/entities/task.entity';
 
 @Controller('notification')
 export class NotificationController {
@@ -25,11 +26,12 @@ export class NotificationController {
       budgetSpent: 0,
       budgetCurrency: 'USD',
       tasks: [],
+      milestones: [],
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
-    const testTask = {
+    const testTask: Task = {
       id: 0,
       title: 'Test Task',
       description: 'This is a test task notification email',
@@ -38,6 +40,8 @@ export class NotificationController {
       assignee_id: null,
       project: testProject,
       project_id: 1,
+      milestone: null,
+      milestone_id: null,
       deadline: null,
       completedAt: null,
       moneySpent: 0,

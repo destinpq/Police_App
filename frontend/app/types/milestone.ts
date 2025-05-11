@@ -23,6 +23,7 @@ export interface CreateMilestoneDto {
 }
 
 export interface UpdateMilestoneDto {
+  id?: number;
   name?: string;
   description?: string;
   status?: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
