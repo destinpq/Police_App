@@ -87,48 +87,57 @@ const ProjectList: React.FC<ProjectListProps> = ({
 
   return (
     <Card title="Projects" className="project-list">
-      <List
-        itemLayout="vertical"
-        dataSource={dataSource}
-        renderItem={(item) => (
-          <List.Item
-            key={item.id}
-            onClick={() => onSelectProject(item.id)}
-            className={selectedProjectId === item.id ? 'ant-list-item-active' : ''}
-            style={{ cursor: 'pointer' }}
-            actions={item.id !== 0 && isProject(item) ? [
-              isAdmin && (
-                <Space key="actions">
-                  <Button 
-                    type="text" 
-                    icon={<EditOutlined />} 
-                    onClick={(e) => handleEdit(item, e as React.MouseEvent)}
-                  />
-                  <Popconfirm
-                    title="Delete Project"
-                    description="Are you sure you want to delete this project?"
-                    onConfirm={(e) => handleDelete(item.id, e as React.MouseEvent)}
-                    okText="Yes"
-                    cancelText="No"
-                  >
+      <div 
+        className="project-list-scroll-container"
+        style={{ 
+          maxHeight: '60vh', 
+          overflowY: 'auto',
+          paddingRight: '4px' // Add some padding for the scrollbar
+        }}
+      >
+        <List
+          itemLayout="vertical"
+          dataSource={dataSource}
+          renderItem={(item) => (
+            <List.Item
+              key={item.id}
+              onClick={() => onSelectProject(item.id)}
+              className={selectedProjectId === item.id ? 'ant-list-item-active' : ''}
+              style={{ cursor: 'pointer' }}
+              actions={item.id !== 0 && isProject(item) ? [
+                isAdmin && (
+                  <Space key="actions">
                     <Button 
                       type="text" 
-                      danger 
-                      icon={<DeleteOutlined />} 
-                      onClick={(e) => e.stopPropagation()}
+                      icon={<EditOutlined />} 
+                      onClick={(e) => handleEdit(item, e as React.MouseEvent)}
                     />
-                  </Popconfirm>
-                </Space>
-              )
-            ] : []}
-          >
-            <List.Item.Meta
-              title={item.name}
-              description={item.id !== 0 && isProject(item) && item.description}
-            />
-          </List.Item>
-        )}
-      />
+                    <Popconfirm
+                      title="Delete Project"
+                      description="Are you sure you want to delete this project?"
+                      onConfirm={(e) => handleDelete(item.id, e as React.MouseEvent)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button 
+                        type="text" 
+                        danger 
+                        icon={<DeleteOutlined />} 
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </Popconfirm>
+                  </Space>
+                )
+              ] : []}
+            >
+              <List.Item.Meta
+                title={item.name}
+                description={item.id !== 0 && isProject(item) && item.description}
+              />
+            </List.Item>
+          )}
+        />
+      </div>
 
       <Modal
         title="Edit Project"
@@ -151,6 +160,40 @@ const ProjectList: React.FC<ProjectListProps> = ({
         }
         :global(.project-list) {
           margin-bottom: 20px;
+        }
+        :global(.project-list .ant-card-body) {
+          padding: 0;
+        }
+        :global(.project-list .ant-list-item) {
+          padding: 12px 16px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        :global(.project-list .ant-list-item:last-child) {
+          border-bottom: none;
+        }
+        :global(.project-list .ant-list-item:hover) {
+          background-color: #f5f5f5;
+        }
+        :global(.project-list .ant-list-item-active:hover) {
+          background-color: #e6f7ff;
+        }
+        :global(.project-list-scroll-container) {
+          scrollbar-width: thin;
+          scrollbar-color: #bfbfbf #f0f0f0;
+        }
+        :global(.project-list-scroll-container::-webkit-scrollbar) {
+          width: 6px;
+        }
+        :global(.project-list-scroll-container::-webkit-scrollbar-track) {
+          background: #f0f0f0;
+          border-radius: 3px;
+        }
+        :global(.project-list-scroll-container::-webkit-scrollbar-thumb) {
+          background: #bfbfbf;
+          border-radius: 3px;
+        }
+        :global(.project-list-scroll-container::-webkit-scrollbar-thumb:hover) {
+          background: #999;
         }
         .error {
           color: red;
