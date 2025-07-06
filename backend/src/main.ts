@@ -55,8 +55,9 @@ async function bootstrap() {
   }
   
   app.enableCors({
-    origin: origins,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: true, // Allow all origins temporarily to fix the issue
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,
   });
   
