@@ -7,7 +7,6 @@ import * as crypto from 'crypto';
 
 // Add global crypto polyfill if it doesn't exist
 if (typeof (global as any).crypto === 'undefined') {
-  // @ts-expect-error - Adding to global
   (global as any).crypto = {
     randomUUID: () => crypto.randomUUID(),
   };
