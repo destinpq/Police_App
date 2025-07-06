@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
-import { getConnection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { AppModule } from './app.module';
 import { DbSeed } from './db-seed';
 
@@ -12,9 +12,9 @@ async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
 
   try {
-    // Get the connection from TypeORM
-    const connection = getConnection();
-    const entityManager = connection.manager;
+    // Get the DataSource from the app
+    const dataSource = app.get(DataSource);
+    const entityManager = dataSource.manager;
 
     // Initialize the seeder
     const seeder = new DbSeed(entityManager);
