@@ -108,4 +108,46 @@ export class NotificationService {
       this.logger.error(`Failed to send notification to ${user.email}: ${errorMessage}`);
     }
   }
+
+  /**
+   * Send account creation notification email
+   */
+  async sendAccountCreationNotification(user: User): Promise<void> {
+    if (!this.transporter) {
+      this.logger.error('Cannot send email: mail transporter not initialized');
+      return;
+    }
+    
+    try {
+      const mailOptions = {
+        from: {
+          name: 'Task Tracker',
+          address: this.mailFrom,
+        },
+        to: user.email,
+        subject: 'Welcome to Task Tracker - Account Created',
+        html: `
+          <h1>Welcome to Task Tracker!</h1>
+          <p>Hello,</p>
+          <p>Your account has been successfully created in the Task Tracker system.</p>
+          <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin: 15px 0; background-color: #f9f9f9;">
+            <h2 style="color: #1677ff;">Account Details</h2>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Password:</strong> Your password has been set (please change it after first login)</p>
+            <p><strong>Role:</strong> ${user.isAdmin ? 'Administrator' : 'User'}</p>
+          </div>
+          <p>You can now login to the Task Tracker application at: <a href="https://task.destinpq.com">https://task.destinpq.com</a></p>
+          <p>For security reasons, please consider changing your password after your first login.</p>
+          <p>If you have any questions or need assistance, please contact the system administrator.</p>
+          <p>Regards,<br>Task Tracker Team</p>
+        `,
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Account creation email sent to ${user.email}: ${info.messageId}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to send account creation notification to ${user.email}: ${errorMessage}`);
+    }
+  }
 } 

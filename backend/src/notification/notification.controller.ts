@@ -52,4 +52,18 @@ export class NotificationController {
     await this.notificationService.sendTaskAssignmentNotification(testUser, testTask);
     return { message: `Test email sent to ${data.email}` };
   }
+
+  @Post('account-creation')
+  async sendAccountCreationEmail(@Body() data: { email: string; isAdmin?: boolean }): Promise<{ message: string }> {
+    const testUser: User = {
+      id: 0,
+      email: data.email,
+      password: 'DestinPQ@24225',
+      isAdmin: data.isAdmin || false,
+      tasks: []
+    };
+
+    await this.notificationService.sendAccountCreationNotification(testUser);
+    return { message: `Account creation email sent to ${data.email}` };
+  }
 } 
