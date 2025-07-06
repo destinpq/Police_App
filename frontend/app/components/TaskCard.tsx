@@ -60,7 +60,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, isAdmin }) 
       )}
     </Menu>
   );
-
+  
   return (
     <Card 
       size="small" 
@@ -136,8 +136,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, isAdmin }) 
               {isOverdue ? 'Overdue: ' : 'Due: '}
               {dayjs(task.deadline).format('MMM D, YYYY')}
             </Text>
-          </div>
-        )}
+        </div>
+      )}
         
         {task.moneySpent && task.moneySpent > 0 && (
           <div>
@@ -149,11 +149,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, isAdmin }) 
             >
               Budget: ${task.moneySpent.toFixed(2)}
             </Text>
-          </div>
+    </div>
         )}
       </Space>
     </Card>
   );
-};
+}; 
 
 export default TaskCard; 

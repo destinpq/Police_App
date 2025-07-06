@@ -7,9 +7,9 @@ import * as crypto from 'crypto';
 
 // Add global crypto polyfill if it doesn't exist
 if (typeof (global as any).crypto === 'undefined') {
-  // @ts-ignore - Adding to global
+  // @ts-expect-error - Adding to global
   (global as any).crypto = {
-    randomUUID: () => crypto.randomUUID()
+    randomUUID: () => crypto.randomUUID(),
   };
 }
 
@@ -18,25 +18,36 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const port = process.env.PORT || configService.get<number>('PORT') || 8080;
-  
+
   // Log email configuration
   logger.log('Email configuration:');
   logger.log(`MAIL_HOST: ${configService.get('MAIL_HOST')}`);
   logger.log(`MAIL_PORT: ${configService.get('MAIL_PORT')}`);
   logger.log(`MAIL_USER: ${configService.get('MAIL_USER')}`);
   logger.log(`IMAP_HOST: ${configService.get('IMAP_HOST')}`);
-  
+
   // Enable CORS with support for multiple origins
   // Format for CLIENT_ORIGIN can be a single URL or comma-separated list:
   // e.g., https://example.com or https://example.com,https://another.com
-  const clientOriginEnv = process.env.CLIENT_ORIGIN || configService.get<string>('CLIENT_ORIGIN') || 'http://localhost:3000';
-  
+  const clientOriginEnv =
+    process.env.CLIENT_ORIGIN ||
+    configService.get<string>('CLIENT_ORIGIN') ||
+    'http://localhost:3000,https://task.destinpq.com';
+
   // Parse origin(s) - either a single string or array of allowed origins
-  let origins: string | string[] | RegExp | RegExp[] | ((origin: string, callback: (err: Error | null, allow?: boolean) => void) => void);
-  
+  let origins:
+    | string
+    | string[]
+    | RegExp
+    | RegExp[]
+    | ((
+        origin: string,
+        callback: (err: Error | null, allow?: boolean) => void,
+      ) => void);
+
   if (clientOriginEnv.includes(',')) {
     // Handle multiple origins
-    origins = clientOriginEnv.split(',').map(origin => origin.trim());
+    origins = clientOriginEnv.split(',').map((origin) => origin.trim());
     logger.log(`CORS enabled for multiple origins: ${origins.join(', ')}`);
   } else {
     // Single origin

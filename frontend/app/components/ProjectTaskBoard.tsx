@@ -149,20 +149,20 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
 
   // Project list to show in sidebar or drawer
   const ProjectListComponent = (
-    <div style={{ marginBottom: '20px' }}>
-      <ProjectList 
-        onSelectProject={handleProjectSelect} 
-        selectedProjectId={selectedProjectId}
-        isAdmin={currentUser.isAdmin}
-        onProjectUpdated={handleProjectUpdated}
-      />
-      {currentUser.isAdmin && (
-        <ProjectForm 
-          onProjectAdded={handleProjectAdded} 
-          currentUser={currentUser}
-        />
-      )}
-    </div>
+          <div style={{ marginBottom: '20px' }}>
+            <ProjectList 
+              onSelectProject={handleProjectSelect} 
+              selectedProjectId={selectedProjectId}
+              isAdmin={currentUser.isAdmin}
+              onProjectUpdated={handleProjectUpdated}
+            />
+            {currentUser.isAdmin && (
+              <ProjectForm 
+                onProjectAdded={handleProjectAdded} 
+                currentUser={currentUser}
+              />
+            )}
+          </div>
   );
 
   // Responsive drawer width for forms
@@ -204,20 +204,20 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
         {!isMobile && !isTablet && (
           <Col span={6}>
             {ProjectListComponent}
-          </Col>
+        </Col>
         )}
 
         {/* Main content column */}
         <Col span={isMobile || isTablet ? 24 : 18}>
           {/* Header with project title and create button - only for desktop */}
           {!isMobile && !isTablet && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
-              <h2>
-                {selectedProjectId 
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
+            <h2>
+              {selectedProjectId 
                   ? `Project: ${tasks.length > 0 && tasks[0].project ? tasks[0].project.name : (selectedProject ? selectedProject.name : 'Project')}`
-                  : 'All Tasks'
-                }
-              </h2>
+                : 'All Tasks'
+              }
+            </h2>
               {currentUser.isAdmin && selectedProjectId && (
                 <Button type="primary" onClick={handleCreateTask}>
                   Create Task
@@ -233,7 +233,7 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
                 Create Task
               </Button>
             </div>
-          )}
+            )}
           
           {/* Project budget section */}
           {selectedProject && (
@@ -248,7 +248,7 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
               )}
             </div>
           )}
-
+          
           {/* Tabs for Tasks and Milestones */}
           {selectedProjectId ? (
             <Tabs 
@@ -276,19 +276,19 @@ const ProjectTaskBoard = ({ currentUser }: ProjectTaskBoardProps) => {
           ) : (
             <>
               {!loading && tasks.length === 0 ? (
-                <Empty 
-                  description="No tasks available. Select a project or create a new task."
-                  style={{ margin: '40px 0' }}
-                />
+            <Empty 
+              description="No tasks available. Select a project or create a new task."
+              style={{ margin: '40px 0' }}
+            />
               ) : (
-                <TaskBoard 
-                  tasks={tasks}
-                  loading={loading}
-                  onEditTask={handleEditTask}
-                  onDeleteTask={handleDeleteTask}
-                  refreshTasks={fetchTasks}
-                  isAdmin={currentUser.isAdmin}
-                />
+          <TaskBoard 
+            tasks={tasks}
+            loading={loading}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+            refreshTasks={fetchTasks}
+            isAdmin={currentUser.isAdmin}
+          />
               )}
             </>
           )}

@@ -80,84 +80,84 @@ const ProjectForm = ({ onProjectAdded, currentUser }: ProjectFormProps) => {
         footer={null}
         width={isMobile ? '95%' : 520}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        initialValues={{
             currency: 'USD',
-          }}
+        }}
+      >
+        <Form.Item
+          name="name"
+          label="Project Name"
+          rules={[{ required: true, message: 'Please enter a project name' }]}
         >
-          <Form.Item
-            name="name"
-            label="Project Name"
-            rules={[{ required: true, message: 'Please enter a project name' }]}
-          >
-            <Input placeholder="Enter project name" />
-          </Form.Item>
-
-          <Form.Item
-            name="description"
-            label="Description"
+          <Input placeholder="Enter project name" />
+        </Form.Item>
+        
+        <Form.Item
+          name="description"
+          label="Description"
             rules={[{ required: true, message: 'Please enter a description' }]}
-          >
-            <TextArea
-              placeholder="Enter project description"
+        >
+          <TextArea 
+            placeholder="Enter project description" 
               autoSize={{ minRows: 3, maxRows: 6 }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="budgetCurrency"
-            label="Currency"
-          >
+          />
+        </Form.Item>
+        
+        <Form.Item
+          name="budgetCurrency"
+          label="Currency"
+        >
             <Select defaultValue="USD">
               <Option value="USD">USD ($)</Option>
               <Option value="EUR">EUR (€)</Option>
               <Option value="GBP">GBP (£)</Option>
               <Option value="CAD">CAD (C$)</Option>
               <Option value="AUD">AUD (A$)</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="budget"
+          </Select>
+        </Form.Item>
+        
+        <Form.Item
+          name="budget"
             label="Budget"
-          >
-            <InputNumber
-              style={{ width: '100%' }}
-              min={0}
+        >
+          <InputNumber 
+            style={{ width: '100%' }} 
+            min={0}
               step={100}
               placeholder="Enter budget amount"
               formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={parseAmount}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="budgetSpent"
-            label="Budget Spent"
+          />
+        </Form.Item>
+        
+        <Form.Item
+          name="budgetSpent"
+          label="Budget Spent"
             initialValue={0}
-          >
-            <InputNumber
-              style={{ width: '100%' }}
-              min={0}
+        >
+          <InputNumber 
+            style={{ width: '100%' }} 
+            min={0}
               step={100}
               placeholder="Enter amount spent"
               formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={parseAmount}
-            />
-          </Form.Item>
-
-          <Form.Item>
+          />
+        </Form.Item>
+        
+        <Form.Item>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <Button onClick={handleCancel}>Cancel</Button>
               <Button type="primary" htmlType="submit" loading={isSubmitting}>
                 Create Project
-              </Button>
+          </Button>
             </div>
-          </Form.Item>
-        </Form>
+        </Form.Item>
+      </Form>
       </Modal>
     </>
   );

@@ -13,7 +13,7 @@ npm run build
 
 # Start the application
 echo "=== Starting application ==="
-NODE_ENV=production node server.js
+NODE_ENV=production node server.js 
 
 # Log in to the DigitalOcean Container Registry
 doctl registry login
