@@ -31,7 +31,7 @@ async function bootstrap() {
   const clientOriginEnv =
     process.env.CLIENT_ORIGIN ||
     configService.get<string>('CLIENT_ORIGIN') ||
-    'http://localhost:3000,https://task.destinpq.com';
+    'http://localhost:3000,https://task.destinpq.com,https://octopus-app-xxcw8.ondigitalocean.app';
 
   // Parse origin(s) - either a single string or array of allowed origins
   let origins:
